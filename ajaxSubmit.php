@@ -1,5 +1,5 @@
 <script type="text/javascript">
-    ///sdfsdf
+    ///sdfsdfsdfsdf
     /*//数据重新加载绑定
     var dataBindSource = function (){
         var url = "<?php echo $this->createurl("Segment");?>";
