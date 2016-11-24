@@ -31,7 +31,7 @@ $title='竞赛列表';
             
 <div class="Main">
   <?php require(FILE_ROOT.'/views/view_admin_left.php'); ?>
-  
+  asdfsd
   <div class="my_right">
     <h2>
 	  <a href="<?php echo COMPETITION_INDEX;?>/index.php?view=admin" style="font-size:20px"><?php echo $title ?></a>&nbsp;
