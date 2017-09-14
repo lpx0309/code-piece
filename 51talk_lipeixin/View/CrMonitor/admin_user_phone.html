@@ -1,0 +1,54 @@
+{block name=head}
+<link href="http://static.51talk.com/images/admin/skin.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/css/admin/right_css.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css">
+<script src="http://static.51talk.com/js/jquery.min.js" type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.ui/jquery-ui.min.js' type="text/javascript" language="javascript"></script>
+<script src="http://static.51talk.com/js/jquery.form.js" type="text/javascript" language="javascript"></script>
+{literal}
+<script type="text/javascript">
+    $(function () {
+        $('#file_admin_user_phone').change(function () {
+            $('#form_admin_user_phone').ajaxSubmit({
+                url: "/CrMonitor/AdminUserPhoneActive",
+                type: 'POST',
+                async: true,
+                //data: '',
+                dataType:'json',
+                beforeSubmit: function () {
+                    //console.log($(this).serialize());
+                },
+                success: function (response) {
+                    //alert(response);
+                    //console.log(response);
+                    if(response) {
+                        var table;
+                        for(i in response){
+                            table+='<tr><td>'+i+'</td><td>'+response[i]+'</td></tr>';
+                        }
+                        $('#result').html(table);
+                        $('#form_admin_user_phone').resetForm();
+                    }
+                }
+            });
+        });
+    });
+</script>
+
+<style type="text/css">
+
+</style>
+
+{/literal}
+{/block}
+
+{block name=body}
+
+<form action="" method="" enctype="multipart/form-data" id="form_admin_user_phone">
+    <input type="file" name="file_admin_user_phone" id="file_admin_user_phone">
+</form>
+
+<table id="result">
+
+</table>
+{/block}

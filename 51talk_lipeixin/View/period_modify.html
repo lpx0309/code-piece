@@ -1,0 +1,298 @@
+{if $blank}
+    <link href="http://static.51talk.com/images/admin/skin.css" rel="stylesheet" type="text/css" />
+    <link href="http://static.51talk.com/css/admin/right_css.css" rel="stylesheet" type="text/css" />
+    <link href="http://static.51talk.com/js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css" />
+    <script src="http://static.51talk.com/js/jquery.min.js" type="text/javascript" language="javascript"></script>
+    <script src='http://static.51talk.com/js/jquery.ui/jquery-ui.min.js' type="text/javascript" language="javascript"></script>
+    <script src="http://static.51talk.com/js/WebCalendar.js" type="text/javascript" language="javascript"></script>
+    <title>课时修改</title>
+    <input type="hidden" id="stu_id" value="{$stu_id}">
+<input type="hidden" id="is_refund" value="{$is_refund}">
+{/if}
+
+{literal}
+<script type="text/javascript">
+    //加载页面
+    function pop_loading(){
+        var loading='<img src="http://static.51talk.com/images/admin/loadding2.gif" />';
+        $("body").append('<div id="pop_loading"><div style="text-align:center">'+loading+'</div></div>');
+        $("#pop_loading").dialog({
+            bgiframe: true,
+            autoOpen: true,
+            resizable: false,
+            modal: true,
+            height: 160,
+            width: 300,
+            open: function(){
+                $(this).parent().find('.ui-dialog-titlebar').hide();
+            },
+            close: function(){
+                $(this).remove();
+            }
+        });
+    }
+    //加载页面关闭
+    function pop_loading_close(){
+        $('#pop_loading').dialog('close');
+    }
+
+    $(function(){
+        period_op(1);
+        var is_refund = $("#is_refund").val();
+        if (is_refund=='y') {
+            $("button").attr("disabled","disabled");
+        }
+    });
+    //课时操作
+    function period_op(op){
+        op = parseInt(op);
+        switch (op){
+            case 1:
+                $('.period_class_time').show();
+                $('.period_time_limit').hide();
+                $('.period_reason_title1').show();
+                $('.period_reason_title2').hide();
+                $('.period_add').show();
+                $('.period_reduce').hide();
+                $('.period_modify').hide();
+                break;
+            case 2:
+                $('.period_class_time').show();
+                $('.period_time_limit').hide();
+                $('.period_reason_title1').show();
+                $('.period_reason_title2').hide();
+                $('.period_add').hide();
+                $('.period_reduce').show();
+                $('.period_modify').hide();
+                break;
+            case 3:
+                $('.period_class_time').hide();
+                $('.period_time_limit').show();
+                $('.period_reason_title1').hide();
+                $('.period_reason_title2').show();
+                $('.period_add').hide();
+                $('.period_reduce').hide();
+                $('.period_modify').show();
+                break;
+            default:
+                break;
+        }
+        $('#period_class_time').val(1);
+    }
+    //课时控件
+    function period_class_time(k){
+        var min = 1;
+        var period_class_time = $('#period_class_time').val();
+        if(k) {
+            period_class_time++;
+        }else{
+            period_class_time--;
+        }
+        if(period_class_time <= min){
+            period_class_time = 1;
+        }
+        if($('#period_op').val()==2) {
+            //减少课时不能超过剩余
+            var max = parseInt($('#period_remain').html());
+            if (period_class_time >= max) {
+                period_class_time = max;
+            }
+        }
+        $('#period_class_time').val(period_class_time);
+    }
+    //课时操作
+    function period_click(op){
+        var stu_point_id = $('#stu_point_id').val();
+        //学员ID
+        var stu_id = $('#user_id').val();
+        if(!stu_id){
+            var stu_id=$('#stu_id').val();
+        }
+        //备注
+        if(!$('#period_remark').val()){
+            alert('请填写备注！');
+            return false;
+        }
+        var remark = $('#period_remark').val();
+        switch (op){
+            case 1:
+                if(!$('#period_reason').val()) {
+                    alert('请选择操作原因!');
+                    return false;
+                }
+                var period_remain = parseInt($('#period_remain').html());
+                var period_class_time = parseInt($('#period_class_time').val());
+                var content = period_remain + period_class_time;
+                var reason = $('#period_reason').val();
+                var before = period_remain;
+                var after = content;
+                break;
+            case 2:
+                if(!$('#period_reason').val()) {
+                    alert('请选择操作原因!');
+                    return false;
+                }
+                var period_remain = parseInt($('#period_remain').html());
+                var period_class_time = parseInt($('#period_class_time').val());
+                var content = period_remain - period_class_time;
+                var reason = $('#period_reason').val();
+                var before = period_remain;
+                var after = content;
+                break;
+            case 3:
+                if(!$('#period_time_limit').val()) {
+                    alert('请选择有效期!');
+                    return false;
+                }
+                var time_limit = $('#time_limit').html();
+                var time_limit_stamp = new Date(time_limit).getTime();
+                var modify_time_limit = $('#period_time_limit').val();
+                var modify_time_limit_stamp = new Date(modify_time_limit).getTime();
+                if(modify_time_limit_stamp <= time_limit_stamp) {
+                    alert('延长期限必须大于当前日期！');
+                    return false;
+                }
+                if(!$('#period_reason').val()) {
+                    alert('请选择延长原因!');
+                    return false;
+                }
+                if (!confirm('修改完成后，课时量有效期将从'+time_limit+' 更新为 '+modify_time_limit+'，确定修改吗？')) {
+                    return false;
+                }
+                var content = modify_time_limit;
+                var reason = $('#period_reason').val();
+                var before = time_limit;
+                var after = modify_time_limit;
+                break;
+            default:
+                break;
+        }
+        var data = {
+            'op':op,
+            'stu_id':stu_id,
+            'remark':remark,
+            'stu_point_id':stu_point_id,
+            'content':content,
+            'reason':reason,
+            'before':before,
+            'after':after
+        };
+        //console.log(data);return false;
+        $.ajax({
+            url:'ajax_period.php',
+            type:'POST',
+            data:data,
+            beforeSend:function(){
+                pop_loading();
+            },
+            success:function(msg){
+                pop_loading_close();
+                //alert(msg);
+                if(isNaN(msg)){
+                    alert(msg);
+                }else{
+                    alert('操作成功！');
+                    window.location.reload();
+                }
+            }
+        });
+    }
+    //课时流水
+    function period_record(){
+        var stu_id = $('#user_id').val();
+        if(!stu_id){
+            var stu_id=$('#stu_id').val();
+        }
+        $("body").append('<div id="period_record">载入中...</div>');
+        $("#period_record").dialog({
+            modal: true,
+            autoOpen:true,
+            resizable:true,
+            width:1000,
+            height:500,
+            title:'课时流水',
+            open:function(){
+                $(this).load('period_record.php?stu_id='+stu_id);
+            },
+            close:function(){
+                $(this).remove();
+            }
+        });
+    }
+</script>
+{/literal}
+
+<input type="hidden" id="stu_point_id" value="{$stu_point_id}">
+<table width="100%">
+    <thead>
+        <tr>
+            <th class="table_title" colspan="2">
+                课时修改&nbsp;
+                <a href="javascript:;" onclick="period_record()" style="color: red">查看流水</a>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th width="20%" height="23" align="right">操作：</th>
+            <td width="80%">
+                <select id="period_op" onchange="period_op(this.value)">
+                    <option value="1">添加课时</option>
+                    <option value="2">减少课时</option>
+                    <option value="3">延长期限</option>
+                </select>
+            </td>
+        </tr>
+        <tr class="period_remain">
+            <th width="20%" height="23" align="right" style="font-weight: normal">当前剩余课时：</th>
+            <td width="80%" id="period_remain">{$period_remain}</td>
+        </tr>
+        <tr>
+            <th width="20%" height="23" align="right" style="font-weight: normal">有效期至：</th>
+            <td width="80%" id="time_limit">{$valid_end}</td>
+        </tr>
+        <!--1、添加课时，2、减少课时-->
+        <tr class="period_class_time">
+            <th width="20%" height="23" align="right" style="font-weight: normal">课时：</th>
+            <td>
+                <img onclick="period_class_time()" src="../../images/reduce.png" alt="点击减少">&nbsp;
+                <input type="text" name="period_class_time" id="period_class_time" size="3" value="1">&nbsp;
+                <img onclick="period_class_time(1)" src="../../images/add.png" alt="点击增加">
+            </td>
+        </tr>
+        <!--3、延长期限-->
+        <tr class="period_time_limit">
+            <th width="20%" height="23" align="right" style="font-weight: normal">调整有效期：</th>
+            <td width="80%"><input type="text" id="period_time_limit" value="{$valid_end}" onclick="SelectDate(this)" size="10" readonly></td>
+        </tr>
+        <tr class="period_reason">
+            <th width="20%" height="23" align="right" style="font-weight: normal">
+                <span class="period_reason_title1">操作原因</span>
+                <span class="period_reason_title2">延长原因</span> ：
+            </th>
+            <td width="80%">
+                <select id="period_reason">
+                    <option value="">请选择</option>
+                    {foreach from=$add_reason item=reason}
+                        <option value="{$reason}">{$reason}</option>
+                    {/foreach}
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <th width="20%" height="23" align="right">填写备注：</th>
+            <td width="80%">
+                <textarea id="period_remark" rows='5' cols='100'></textarea>
+            </td>
+        </tr>
+        <tr>
+            <th colspan="2">
+                {if $modify_right == 1}
+                    <button class="period_add" onclick="period_click(1)">提交</button>
+                    <button class="period_reduce" onclick="period_click(2)">提交</button>
+                    <button class="period_modify" onclick="period_click(3)">提交</button>
+                {/if}
+            </th>
+        </tr>
+    </tbody>
+</table>

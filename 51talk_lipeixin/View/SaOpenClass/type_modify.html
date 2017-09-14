@@ -1,0 +1,39 @@
+{block name=body}
+<table width="100%">
+    <tr>
+        <th>*课程类型：</th>
+        <td><input type="text" id="type" value="{$type.type_name}"> </td>
+    </tr>
+    <tr>
+        <th>*状态：</th>
+        <td>
+            <input type="radio" name="status" value="1" {if $type.status == 1} checked {/if}>启用
+            <input type="radio" name="status" value="2" {if $type.status == 2} checked {/if}>停用
+        </td>
+    </tr>
+    <tr>
+        <th>*部门可见：</th>
+        <td>
+            <!--这里加个判断是因为产品设计上面其它没有部门-->
+            <select id="department">
+                <option value="">请选择</option>
+                {foreach from=$department_list item=department}
+                    {if $department eq '其它'}
+                        <option value="{$department}" {if $type.department == $department} selected {/if}>{$department}</option>
+                    {else}
+                        <option value="{$department}" {if $type.department == $department} selected {/if}>{$department}部门</option>
+                    {/if}
+
+                {/foreach}
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <th>说明：</th>
+        <td>
+            <textarea id="declare" cols="30" rows="10" onkeyup="length_validate('declare')">{$type.declare}</textarea>
+            <span id="length_validate">0</span>/{$text_max}
+        </td>
+    </tr>
+</table>
+{/block}

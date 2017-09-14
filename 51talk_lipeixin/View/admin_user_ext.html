@@ -1,0 +1,150 @@
+<link href="http://static.51talk.com/js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css">
+<script src="http://static.51talk.com/js/jquery.min.js" type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.ui/jquery-ui.min.js' type="text/javascript" language="javascript"></script>
+
+{literal}
+<script type="text/javascript">
+    $(function(){
+        $("#pop_div_admin_user_ext").dialog({
+            modal: true,
+            autoOpen:false,
+            resizable:false,
+            width:600,
+            height:420,
+            title:'CRM用户信息收集，请完整填写，并保证真实有效',
+            close:function(){
+                //$(this).remove();
+                window.location.reload();
+            },
+            buttons: {
+                '提交': function () {
+                    /*if(!$.trim($('#work_number').val())){
+                        alert('请填写工号！');
+                        return false;
+                    }*/
+                    if(!$('#sex').val()){
+                        alert('请选择性别！');
+                        return false;
+                    }
+                    if(!$.trim($('#name_zh').val())){
+                        alert('请填写中文名！');
+                        return false;
+                    }
+                    if(!$.trim($('#name_en').val())){
+                        alert('请填写英文名！');
+                        return false;
+                    }
+                    if($.trim($('#mobile').val()).length<11){
+                        alert('手机号不能少于11位！');
+                        return false;
+                    }
+                    if(!$.trim($('#enterprise_qq').val())){
+                        alert('请填写企业QQ！');
+                        return false;
+                    }
+                    if(!$.trim($('#weixin').val())){
+                        alert('请填写微信！');
+                        return false;
+                    }
+                    /*if(!$.trim($('#email').val())){
+                        alert('请填写邮箱！');
+                        return false;
+                    }*/
+                    if(!$.trim($('#email').val()).match(/^\w+((-\w+)|(\.\w+))*\@[A-Za-z0-9]+((\.|-)[A-Za-z0-9]+)*\.[A-Za-z0-9]+$/)){
+                        alert('邮箱格式不正确！');
+                        return false;
+                    }
+                    if(!$('#motto').val()){
+                        alert('请选择座右铭！');
+                        return false;
+                    }
+                    $.ajax({
+                        url:'/admin/user/ajax_admin_user_ext.php?time='+new Date().getTime(),
+                        type:'POST',
+                        data:$('#form_admin_user_ext').serialize(),
+                        dataType:'jsonp',
+                        success:function(data){
+                            if(isNaN(data)){
+                                alert(data);
+                            }else {
+                                if(data>0) {
+                                    alert('修改成功！');
+                                    window.location.reload();
+                                }else{
+                                    alert('未做任何修改或数据库写入失败！');
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        });
+        $("#pop_div_admin_user_ext").dialog("open");
+    });
+</script>
+{/literal}
+
+<body>
+<div id="pop_div_admin_user_ext">
+    <form id="form_admin_user_ext">
+        <table>
+            <tr>
+                <td>工号</td>
+                <td>
+                    <input type="text" value="{$check_admin_user_ext.work_number}" disabled>
+                    <input type="hidden" id="work_number" name="work_number" value="{$check_admin_user_ext.work_number}">
+                </td>
+            </tr>
+            <tr>
+                <td>性别</td>
+                <td>
+                    <select id="sex" name="sex">
+                        <option value="">请选择</option>
+                        <option value="男" {if $check_admin_user_ext.sex=='男'} selected {/if}>男</option>
+                        <option value="女" {if $check_admin_user_ext.sex=='女'} selected {/if}>女</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>中文名</td>
+                <td><input type="text" id="name_zh" name="name_zh" value="{$check_admin_user_ext.name_zh}" size="7" maxlength="5"></td>
+            </tr>
+            <tr>
+                <td>英文名</td>
+                <td><input type="text" id="name_en" name="name_en" value="{$check_admin_user_ext.name_en}" size="30"></td>
+            </tr>
+            <tr>
+                <td>手机</td>
+                <td><input type="text" id="mobile" name="mobile" value="{$check_admin_user_ext.mobile}" size="30"></td>
+            </tr>
+            <tr>
+                <td>企业QQ</td>
+                <td><input type="text" id="enterprise_qq" name="enterprise_qq" value="{$check_admin_user_ext.enterprise_qq}" size="30"></td>
+            </tr>
+            <tr>
+                <td>微信</td>
+                <td><input type="text" id="weixin" name="weixin" value="{$check_admin_user_ext.weixin}" size="30"></td>
+            </tr>
+            <tr>
+                <td>邮箱</td>
+                <td><input type="text" id="email" name="email" value="{$check_admin_user_ext.email}" size="30"></td>
+            </tr>
+            <tr>
+                <td>座右铭</td>
+                <td>
+                    <!--<textarea id="motto" name="motto" style="width: 300px; height: 100px">{$check_admin_user_ext.motto}</textarea>-->
+                    <select id="motto" name="motto">
+                        <option value="">请选择</option>
+                        {foreach from=$motto item=m}
+                            <option {if $m==$check_admin_user_ext.motto} selected {/if}>{$m}</option>
+                        {/foreach}
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+{include file="StyleDefault/comm/log_data.html"}
+</body>
+

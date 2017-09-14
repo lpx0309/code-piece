@@ -1,0 +1,76 @@
+{block name=head}
+<link href="http://static.51talk.com/images/admin/skin.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/css/admin/right_css.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css">
+<script src="http://static.51talk.com/js/jquery.min.js" type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.ui/jquery-ui.min.js' type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.form.js' type="text/javascript" language="javascript"></script>
+{literal}
+<script>
+$(function () {
+    $('#gift_dump').click(function () {
+        var url = location.href;
+        if(url.indexOf('?') > 0){
+            url += '&';
+        }else{
+            url += '?';
+        }
+        window.location = url + 'excel=1';
+    })
+})
+</script>
+{/literal}
+{/block}
+
+{block name=body}
+<form method="get">
+    活动名称：<input type="text" name="event_name" value="{$param.event_name}">
+    学员ID：<input type="text" name="user_id" value="{$param.user_id}">
+    赠课结果：
+    <select name="status">
+        {foreach from=$status item=item key=key}
+            <option value="{$key}" {if $param.status==$key && $param.status!='all'} selected {/if}>{$item}</option>
+        {/foreach}
+    </select>
+    <button type="submit">确定</button>
+    <a href="javascript:;" id="gift_dump">导出</a>
+</form>
+<table width="100%">
+    <thead>
+    <tr>
+        <th width="10%">学员ID</th>
+        <th>活动</th>
+        <th width="15%">已消耗（课耗/财富）</th>
+        <th width="10%">已赠课数</th>
+        <th width="10%">赠课结果</th>
+        <th width="10%">赠课时间</th>
+    </tr>
+    </thead>
+    <tbody>
+    {if $gift_list}
+        {foreach from=$gift_list item=gift key=key}
+            <tr>
+                <td align="center">{$gift.user_id}</td>
+                <td align="center">
+                    {if $gift.event_name}
+                        名称：<!--<a href="javascript:;" class="event_name" event_id="{$gift.event_id}" title="点击查看详情">{$gift.event_name}</a>-->{$gift.event_name}&nbsp;&nbsp;&nbsp;
+                        周期：{$gift.cycle}天&nbsp;&nbsp;&nbsp;
+                        状态：{$gift.event_status}&nbsp;&nbsp;&nbsp;
+                        赠课类型：{$gift.gift_type}
+                    {else}
+                        活动已被删除
+                    {/if}
+                </td>
+                <td align="center">{$gift.finish}</td>
+                <td align="center">{$gift.gift}</td>
+                <td align="center">{$gift.status_word}</td>
+                <td>{$gift.send_point_time}</td>
+            </tr>
+        {/foreach}
+        <tr><td align="right" colspan="20">{$Page}</td></tr>
+    {else}
+        <tr><td align="center" colspan="20">暂无赠课</td></tr>
+    {/if}
+    </tbody>
+</table>
+{/block}

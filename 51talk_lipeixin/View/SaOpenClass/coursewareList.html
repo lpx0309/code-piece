@@ -1,0 +1,330 @@
+<!--<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">-->
+<!--<html xmlns="http://www.w3.org/1999/xhtml">-->
+<!--<head>-->
+{block name=head}
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+{literal}
+<link href="../../images/admin/skin.css" rel="stylesheet" type="text/css" />
+<link href="../../css/admin/right_css.css" rel="stylesheet" type="text/css">
+<script src='../../js/jquery.js'></script>
+<script src='../../js/WebCalendar.js'></script>
+<script src='../../js/jquery.ui/jquery-ui.min.js'></script>
+<link href="../../js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css">
+<script src="../../js/new_user/uploadify/jquery.uploadify-3.1.min.js" type="text/javascript" language="javascript"></script>
+{/literal}
+    {/block}
+<!--</head>-->
+
+<!--<body>-->
+{block name='body'}
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+    
+        <tr>
+            <th class="table_title"><a href="javascript:addCoursewareShow()" style="float:right">添加课件</a></th>
+        </tr>
+
+        <tr>
+            <td width="17%" height="23">
+                <form action="/SaOpenClassCourseware/CoursewareList" method="get" id="form_sub" style="float:left">
+                    上传人：
+                   {if $lookOtherCourseware == true}
+                        <input type="text" name="adminUserName" value="{$adminUserName}">
+                        <input type="submit" name="submit" value="查询">
+                    {else}
+                        <span>{$adminUserName}</span>
+                    {/if}
+                </form>
+
+            </td>
+        </tr>
+        <tr>
+            <td width="17%" height="23">
+            
+            <table width="100%" cellpadding="500px" cellspacing="500px">
+                <thead>
+                    <tr>
+                        <th>课件ID</th>
+                        <th>课件名称</th>
+                        <th>失效日期</th>
+                        <th>上传人</th>
+                        <th>上传时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {foreach from=$CoursewareList key=key item=list}
+                    <tr>
+                        <td align="center">{$list.id}</td>
+                        <td align="center">{$list.CoursewareName}</td>
+                        <td align="center">{$list.deadline|date_format:"%Y-%m-%d"}</td>
+                        <td align="center">{$list.adminUserName}</td>
+                        <td align="center">{$list.created_date}</td>
+                        <td align="center">
+                            <a href="javascript:upCoursewareShow({$list.id})">修改</a>
+                            <a href="javascript:delCoursewareShow({$list.id})">删除</a>
+                        </td>
+                    </tr>
+                {/foreach}
+                </tbody>
+            </table>
+            </td>
+        </tr>
+    
+</table>
+
+<div id ="addCourseware" style="display:none">
+    <table width="100%" cellpadding="100px" cellspacing="100px">
+        <form action="CoursewareCreate" method="post" id="CoursewareCreate" style="float:left" enctype='multipart/form-data'>
+            <table>
+                <tr>
+                    <td>*课件名称：</td>
+                    <td><input type ="text" id="addCoursewareName" name="CoursewareName"><br></td>
+                </tr>
+                <tr>
+                    <td>*失效日期：</td>
+                    <td>
+                        <input type="text" name="deadline" id="addDeadline" size="10" value="{$nowDate}" onclick="SelectDate(this)" readonly="readonly">
+                    </td>
+                </tr>
+                <tr>
+                    <td>*图片：</td>
+                    <td><input type="file" name="photo" id="addPhoto" /><br></td>
+                </tr>
+
+                <tr>
+                    <td>*课件：</td>
+                    <td><input type="file" name="pdf" id="addPdf" /><br></td>
+                </tr>
+
+                <tr>
+                    <td>是否允许学员翻页：</td>
+                    <td><input type="radio" name="isPage" value="1" checked="checked"> 是 <input type="radio" name="isPage" value="0"> 否<br></td>
+                </tr>
+            </table>
+        </form>
+    </table>
+    <input type="hidden" id="teacher_id" value="">
+</div>
+
+<div id ="upCourseware" style="display:none">
+    <table width="100%" cellpadding="100px" cellspacing="100px">
+        <form action="CoursewareUpdate" method="post" id="CoursewareUpdate" style="float:left" enctype='multipart/form-data'>
+            <table>
+                <tr>
+                    <td>*课件名称：</td>
+                    <td><input type ="text" id="upCoursewareName" name="coursewareName"><br></td>
+                </tr>
+                <tr>
+                    <td>*失效日期：</td>
+                    <td>
+                        <input type="text" name="deadline" id="upDeadline" size="10" onclick="SelectDate(this)" readonly="readonly">
+                    </td>
+                </tr>
+                <tr>
+                    <td>*图片：</td>
+                    <td>
+                        <input type="file" name="photo" id="upPhoto" /><br>
+                        <span id="oldPhoto"></span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>*课件：</td>
+                    <td>
+                        <input type="file" name="pdf" id="upPdf" /><br>
+                        <span id="oldPdf"></span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>是否允许学员翻页：</td>
+                    <td><input type="radio" id="isPage1" name="isPage" value="1"> 是 <input type="radio" id="isPage0" name="isPage" value="0"> 否<br></td>
+                </tr>
+                <input type="hidden" id="upCoursewareId" name="id">
+            </table>
+        </form>
+    </table>
+</div>
+
+{literal}
+    <script>
+        //添加课件信息
+        function addCoursewareShow(){
+            //定义添加框
+            $('#addCourseware').dialog({
+                width:400,
+                height:400,
+                autoOpen: false,
+                title:'添加课件',
+                modal: true,
+                buttons:{
+                    '取消':function(){
+                        $(this).dialog('close');
+                        $(this).dialog('destroy');
+                    },
+                    '提交':function() {
+                        //判断表单中的内容非空
+                        var CoursewareName = $("#addCoursewareName").val();
+                        if(CoursewareName == ''){
+                            alert('请填写课件名称!');
+                            return false;
+                        }
+                        var deadline = $('#addDeadline').val();
+                        if(deadline == ''){
+                            alert('失效时间不能为空！');
+                            return false;
+                        }
+                        //判断图片格式  大小
+                        var filepath = $('#addPhoto').val();
+                        var extStart = filepath.lastIndexOf(".");
+                        var ext = filepath.substring(extStart, filepath.length).toUpperCase();
+                        if (ext != ".PNG" && ext != ".GIF" && ext != ".JPG" && ext != ".JPEG" && ext != ".png" && ext != ".gif" && ext != ".jpg" && ext != ".jpeg") {
+                            alert("图片限于bmp,png,gif,jpeg,jpg格式");
+                            return false;
+                        }
+                        var dom = document.getElementById('addPhoto');
+                        var fileSize =  dom.files[0].size;//文件的大小，单位为字节B
+                        if(fileSize>=1*1024*1024){
+                            alert('图片不能超过1M');
+                            return false;
+                        }
+                        //判断PDF格式  大小
+                        var filepath = $('#addPdf').val();
+                        var extStart = filepath.lastIndexOf(".");
+                        var ext = filepath.substring(extStart, filepath.length).toUpperCase();
+                        if (ext != ".PDF") {
+                            alert("课件必须是,pdf格式");
+                            return false;
+                        }
+                        var dom = document.getElementById('addPdf');
+                        var fileSize =  dom.files[0].size;//文件的大小，单位为字节B
+                        if(fileSize>=10*1024*1024){
+                            alert('课件不能超过10M');
+                            return false;
+                        }
+                        $("#CoursewareCreate").submit();
+                    },
+
+                }
+            });
+            $('#addCourseware').dialog('open');
+        }
+        //检查时间格式
+        function checkDate(){
+            var deadline = $("deadline").val();
+            var dataFormat = /^[0-9]{4}-[0-1]?[0-9]{1}-[0-3]?[0-9]{1}$/;
+            var deadline = $("#addDeadline").val();
+            if(dataFormat.test(deadline)){
+                return true;
+            } else {
+                return false;
+            }
+        }
+        //修改显示
+        function upCoursewareShow(id)
+        {
+            //定义修改显框
+            $('#upCourseware').dialog({
+                width: 400,
+                height: 400,
+                autoOpen: false,
+                title: '修改课件',
+                modal: true,
+                buttons: {
+                    '取消': function () {
+                        $(this).dialog('close');
+                        $(this).dialog('destroy');
+                    },
+                    '提交': function () {
+                        //判断表单中的内容非空
+                        var CoursewareName = $("#upCoursewareName").val();
+                        if(CoursewareName == ''){
+                            alert('请填写课件名称!');
+                            return false;
+                        }
+                        var deadline = $('#upDeadline').val();
+                        if(deadline == ''){
+                            alert('失效时间不能为空！');
+                            return false;
+                        }
+                        //判断图片格式  大小
+                        var filepath = $('#upPhoto').val();
+                        //这里加判断是防止由空值提交
+                        if(filepath){
+                            var extStart = filepath.lastIndexOf(".");
+                            var ext = filepath.substring(extStart, filepath.length).toUpperCase();
+                            if (ext != ".PNG" && ext != ".GIF" && ext != ".JPG" && ext != ".JPEG"&& ext != ".png" && ext != ".gif" && ext != ".jpg" && ext != ".jpeg") {
+                                alert("图片限于bmp,png,gif,jpeg,jpg格式");
+                                return false;
+                            }
+                            var dom = document.getElementById('upPhoto');
+                            var fileSize =  dom.files[0].size;//文件的大小，单位为字节B
+                            if(fileSize>=1*1024*1024){
+                                alert('图片不能超过1M');
+                                return false;
+                            }
+                        }
+
+                        //判断PDF格式  大小
+                        var filepath = $('#upPdf').val();
+                        //这里加判断是防止由空值提交
+                        if(filepath){
+                            var extStart = filepath.lastIndexOf(".");
+                            var ext = filepath.substring(extStart, filepath.length).toUpperCase();
+                            if (ext != ".PDF" && ext != ".pdf" ) {
+                                alert("课件必须是,pdf格式");
+                                return false;
+                            }
+                            var dom = document.getElementById('upPdf');
+                            var fileSize =  dom.files[0].size;//文件的大小，单位为字节B
+                            if(fileSize>=10*1024*1024){
+                                alert('课件不能超过10M');
+                                return false;
+                            }
+                        }
+
+
+                        $("#CoursewareUpdate").submit();
+                    }
+                }
+            });
+            $.ajax({
+                url: "/SaOpenClassCourseware/getCoursewareInfoById",
+                type: "post",
+                dataType: "json",
+                data: {id: id},
+                success: function (e) {
+                    $("#upCoursewareName").val(e.coursewareName);
+                    $("#upDeadline").val(e.deadline);
+                    $('#isPage'+e.is_paging_enabled).attr('checked',true);
+                    $('#oldPdf').text(e.pdf);
+                    $('#oldPhoto').text(e.cover);
+                    $('#upCoursewareId').val(id);
+                }
+            });
+            $('#upCourseware').dialog('open');
+        }
+
+        function delCoursewareShow(id) {
+            if(confirm('确定删除课件？')){
+                $.ajax({
+                    url: "/SaOpenClassCourseware/CoursewareDelete",
+                    type: "post",
+                    dataType: "json",
+                    data: {id: id},
+                    success: function (e) {
+                        if(e.message=='success'){
+                            alert('删除成功！');
+                            window.location.reload();
+                        }else{
+                            alert(e.message);
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+{/literal}
+{/block}
+<!--</body>-->
+<!--</html>-->

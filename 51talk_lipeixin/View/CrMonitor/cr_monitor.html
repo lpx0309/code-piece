@@ -1,0 +1,140 @@
+{block name=head}
+<link href="http://static.51talk.com/images/admin/skin.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/css/admin/right_css.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css">
+<script src="http://static.51talk.com/js/jquery.min.js" type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.ui/jquery-ui.min.js' type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.cookie.js' type="text/javascript" language="javascript"></script>
+<script src="http://static.51talk.com/js/WebCalendar.js" type="text/javascript" language="javascript"></script>
+{literal}
+<script type="text/javascript">
+
+</script>
+<style type="text/css">
+    .whole_data td{
+        text-align: center;
+    }
+    .free_busy_detail th{
+        text-align: left;
+        padding-left: 30px;
+    }
+
+    .cr{
+        width: 100px;
+        height: 40px;
+        border-radius: 10px;
+        color: white;
+        text-align: center;
+        line-height: 40px;
+        float: left;
+        margin: 5px;
+        cursor: pointer;
+    }
+    .pause{
+        background-color: #ff1157;
+    }
+    .free{
+        background-color: #55e20f;
+    }
+    .calling{
+        background-color: #2ab0ff;
+    }
+</style>
+
+<script>
+    //自动刷新
+    setInterval(auto_reload,5000);
+    function auto_reload() {
+        window.location.reload();
+    }
+
+    $(function () {
+        var now_page = $.cookie('cr_monitor');
+        if(now_page == 1){
+            $('.main_data').show();
+            $('.free_busy').hide();
+            $.cookie('cr_monitor',2);
+        }else{
+            $('.main_data').hide();
+            $('.free_busy').show();
+            $.cookie('cr_monitor',1);
+        }
+    })
+</script>
+{/literal}
+{/block}
+
+{block name=body}
+
+<div class="main_data">
+    <h3>整体数据</h3>
+    <table class="whole_data" width="100%">
+        <thead>
+            <tr>
+                <th>监控指标</th>
+                <th>总量/率</th>
+                <th>30分钟量/率</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>呼入量</td>
+                <td>{$callListNum}</td>
+                <td>{$callListNum30}</td>
+            </tr>
+            <tr>
+                <td>排队量</td>
+                <td>{$calls}</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>挂断量</td>
+                <td>{$abandoned}</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>空闲数</td>
+                <td>{$freeCount}</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>置忙数</td>
+                <td>{$pauseCount}</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>10秒接听率</td>
+                <td>{$serviceLevelPerf}</td>
+                <td>-</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="free_busy">
+    <h3>空闲和置忙明细</h3>
+    <table class="free_busy_detail" width="100%">
+        {if $free_busy_detail}
+            {foreach from=$free_busy_detail item=admin_list key=group_name}
+                {if $admin_list}
+                    <tr><th>{$group_name}：</th></tr>
+                    <tr>
+                        <td>
+                            {foreach from=$admin_list item=admin_info}
+                                <div class="cr {$admin_info.status}" title="{$admin_info.status_zh}">
+                                    {$admin_info.name_zh}&nbsp;{$admin_info.time}
+                                    <span style="display: none">{$admin_info.user_name}</span>
+                                    <span style="display: none">{$admin_info.cname}</span>
+                                </div>
+                            {/foreach}
+                        </td>
+                    </tr>
+                {/if}
+            {/foreach}
+        {else}
+            <tr><td align="center">暂无数据</td></tr>
+        {/if}
+    </table>
+</div>
+
+{/block}

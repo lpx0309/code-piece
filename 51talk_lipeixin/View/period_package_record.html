@@ -1,0 +1,32 @@
+<table width="100%">
+    <thead>
+    <tr>
+        <th>操作项目</th>
+        <th>操作内容</th>
+        <th>操作原因</th>
+        <th>操作明细</th>
+        <th>修改前</th>
+        <th>修改后</th>
+        <th>操作人</th>
+        <th>操作时间</th>
+    </tr>
+    </thead>
+    <tbody>
+    {if $package_list}
+        {foreach from=$package_list item=record key=record_id}
+            <tr>
+                <td align="center">{$record.op}</td>
+                <td align="center">{$record.content}</td>
+                <td align="center">{$record.reason}</td>
+                <td align="center">{$record.detail}</td>
+                <td align="center">{$record.limit_pre}</td>
+                <td align="center">{$record.limit_end}</td>
+                <td align="center">{$record.operator}</td>
+                <td align="center">{$record.op_time}</td>
+            </tr>
+        {/foreach}
+    {else}
+        <tr><td colspan="8" align="center">暂无任何记录</td></tr>
+    {/if}
+    </tbody>
+</table>

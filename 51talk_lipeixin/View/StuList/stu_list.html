@@ -1,0 +1,289 @@
+{block name=head}
+<link href="http://static.51talk.com/images/admin/skin.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/css/admin/right_css.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css" />
+<script src="http://static.51talk.com/js/jquery.min.js" type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.ui/jquery-ui.min.js' type="text/javascript" language="javascript"></script>
+{literal}
+<style>
+    .stu_body td{
+        text-align: center;
+    }
+</style>
+<script type="text/javascript">
+    $(function(){
+        //取消下载限制
+        $('.cancel_limit').click(function(){
+            var  stu_id = $(this).attr('su_id');
+            var obj = $(this);
+            if(!confirm('你确定取消当天学生下载教材限制吗?')){
+                return false;
+            }
+            $.ajax({
+                type: "POST",
+                url: "/admin/user/ajax_cancel_limit.php",
+                data: 'id='+stu_id,
+                async: false,
+                success: function(msg){
+                    if(msg == 'ok'){
+                        alert('操作成功');
+                        obj.html('已取消');
+                    }else{
+                        alert('操作失败');
+                    }
+                }
+            });
+        });
+
+        //打回备注信息弹出框
+        $('.return_remark').click(function(){
+            var strId = $(this).attr("stu_id_data");
+            $("#msg_type").attr("href","/admin/user/reset_user_pass.php?user_id=" + strId + "&type=2");
+            $("#phone_type").attr('href','/admin/user/reset_user_pass.php?user_id=' + strId + '&type=1');
+            $('#show_return_remark').dialog({
+                width:200,
+                height:80,
+                autoOpen: false,
+                title:'选择重设密码方式',
+                modal: true,
+                buttons:{
+                    '关闭':function(){
+                        $(this).dialog('close');
+                        $(this).dialog('destroy');
+                    }
+                }
+            });
+            $('#show_return_remark').dialog('open');
+        });
+
+    });
+    //记录搜索日志
+    function addsearchlog(){
+        var str = $('form[name=searchForm]').serialize();
+        // ajax 入库
+        $.ajax({
+            type: "POST",
+            url: "/admin/user/ajaxAddSearchLog.php",
+            data: {str:str,do_type:'add'},
+            dataType:'josn',
+            async: false,
+            success: function(msg){
+                return true;
+            }
+        });
+        return true;
+    }
+    //标记取消VIP
+    function vip_modify(user_id,vip){
+        if(vip==1){
+            var confirm='是否标记VIP？';
+            var callback_alert = '标记成功！';
+        }else{
+            var confirm='是否<font color="red">取消VIP</font>身份？';
+            var callback_alert = '取消成功！';
+        }
+        $('body').append('<div id="pop_div_confirm">'+confirm+'</div>');
+        $('#pop_div_confirm').dialog({
+            modal: true,
+            autoOpen:true,
+            resizable:false,
+            width:300,
+            height:150,
+            title:'确认',
+            close:function(){
+                $(this).remove();
+            },
+            buttons:{
+                '取消':function(){
+                    $(this).dialog('close');
+                },
+                '确定':function(){
+                    $.ajax({
+                        url:'/admin/user/ajax_vip_modify.php',
+                        type:'post',
+                        data:{'user_id':user_id,'vip':vip},
+                        success:function(msg){
+                            if(msg>0) {
+                                alert(callback_alert);
+                                window.location.reload();
+                            }else{
+                                alert(msg);
+                            }
+                        }
+                    });
+                }
+            }
+        })
+    }
+</script>
+{/literal}
+{/block}
+
+{block name=body}
+<form action="" method="get">
+    <table width="100%">
+        <thead>
+        <tr><th class="table_title" align="left" colspan="9" height="25">学员搜索</th></tr>
+        </thead>
+        <tbody>
+        <tr>
+            <th width="10%">付费情况：</th>
+            <td>
+                <select name="is_buy">
+                    <option value="All" {if $is_buy == "All"}selected{/if}>所有会员</option>
+                    <option value="free" {if $is_buy == "free"}selected{/if}>体验会员</option>
+                    <option value="buy" {if $is_buy == "buy"}selected{/if}>付费会员</option>
+                </select>
+            </td>
+            <th width="10%">学员ID：</th><td><input type="text" name="user_id" id="user_id" size="15" value="{$user_id}" /></td>
+            <th width="10%">学号：</th><td><input type="text" name="student_id" id="student_id" size="15" value="{$student_id}" /></td>
+            <th width="10%">Email：</th><td><input type="text" name="email" id="email" size="15" value="{$email}" /></td>
+            <td></td>
+        </tr>
+        <tr>
+            <th>Skype ID：</th><td><input type="text" name="skype_id" id="skype_id"  size="15" value="{$skype_id}" /></td>
+            <th>QQ：</th><td><input type="text" name="qq" id="qq" size="15" value="{$qq}" /></td>
+            <th>手机：</th><td><input type="text" name="mobile" id="mobile" size="15" value="{$mobile}" /></td>
+            <th>代理商：</th><td><input name='agent' value='{$agent}' size="15" /></td>
+            <td width="40%"><input type="submit" name="submit" value="Search" onclick='return addsearchlog()'/></td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+<table width="100%">
+    <thead>
+    <tr>
+        <th>学员ID</th>
+        <th width="60">身份</th>
+        <th>Email</th>
+        <th>NickName</th>
+        <th>Skype ID</th>
+        <th>QQ</th>
+        <th>手机</th>
+        <th>初始等级</th>
+        <th>代理商</th>
+        <th>付费情况</th>
+        <th>包月套餐</th>
+        <th>点数</th>
+        <th>备注</th>
+        <th width="12%">操作</th>
+    </tr>
+    </thead>
+    <tbody class="stu_body">
+    {if $userList}
+        {foreach from=$userList key=Key item=Info}
+        <tr {if $Info.isRecommend eq 1} style="background-color:#dbe6ed" {/if} >
+            <!--学员ID-->
+            <td>
+                {$Info.id}<br />
+                <font style="color:red;font-size:10px;cursor:pointer;" class="cancel_limit" su_id="{$Info.id}">取消下载限制</font>
+            </td>
+            <!--身份-->
+            <td>
+                {if $Info.identity == 0}普通会员{/if}
+                {if $Info.identity == 1}<font color="red"> VIP</font>{/if}
+            </td>
+            <!--Email-->
+            <td><a href="/admin/user/login_to_stu.php?user_id={$Info.id}&nick_name={$Info.nick_name}" >{$Info.user_name|default:student}</a></td>
+            <!--NickName-->
+            <td><a href="/admin/user/user_detail_info.php?user_id={$Info.id}&allow_edit=y" >{$Info.nick_name|default:student}</a></td>
+            <!--SkypeID-->
+            <td>
+                {if $Info.skype_id}
+                    <img src="http://static.51talk.com/images/skype.jpg" alt="Skype" />
+                    <a href="callto://{$Info.proto_skype_id}">{$Info.skype_id}</a>
+                {/if}
+            </td>
+            <!--QQ-->
+            <td>
+                {if $Info.qq}
+                    <img src="http://wpa.qq.com/pa?p=1:{$Info.proto_qq}:4" alt="QQ" />
+                    <a href="http://wpa.qq.com/msgrd?V=3&amp;Uin={$Info.proto_qq}&amp;Menu=yes" target="_blank">{$Info.qq}</a>
+                {/if}
+            </td>
+            <!--手机-->
+            <td>{$Info.mobile}</td>
+            <!--初始等级-->
+            <td>
+                <a href="/admin/user/edit_stu_level.php?user_id={$Info.id}" target="_blank">
+                    {if $Info.now_level_cn}
+                        {$Info.now_level_cn}
+                    {else}
+                        水平设定
+                    {/if}
+                </a>
+            </td>
+            <!--代理商-->
+            <td>{$Info.agent}</td>
+            <!--付费情况-->
+            <td>
+                {if $Info.is_buy == "free"}
+                    <a href="/admin/user/view_list.php?user_id={$Info.id}" target="_blank">体验</a>
+                {elseif $Info.is_buy == "buy"}
+                    付费
+                {/if}
+            </td>
+            <!--包月套餐-->
+            <td>
+                {if $Info.user_point.month}
+                    {$Info.user_point.month.valid_start}&nbsp;&nbsp;~&nbsp;&nbsp;{$Info.user_point.month.valid_end}
+                {/if}
+            </td>
+            <!--点数-->
+            <td>
+                {if $Info.user_point.point.point > 0}
+                    {$Info.user_point.point.point}&nbsp;&nbsp;&nbsp;&nbsp;({$Info.user_point.point.valid_end})
+                {/if}
+            </td>
+            <!--备注-->
+            <td>
+                <a href="/admin/user/update_follow_info.php?user_id={$Info.id}" target="_blank">
+                    {if $Info.remark != ''}
+                        <font color="red">查看</font>
+                    {else}
+                        添加
+                    {/if}
+                </a>&nbsp;&nbsp;
+                {if $Info.follow != ""}
+                    <a href="javascript:void(0);" title="{$Info.follow}"><font color="red">F</font></a>
+                {/if}
+            </td>
+            <!--操作-->
+            <td>
+                {if $check_freeze}
+                    {if $Info.status == "on"}
+                        <a href="/admin/user/freezeUser.php?user_id={$Info.id}&type=freeze" target="_blank">冻结</a>
+                    {elseif $Info.status == "freeze"}
+                        <a href="/admin/user/freezeUser.php?user_id={$Info.id}&type=on" target="_blank">激活</a>
+                    {/if}
+                {/if}
+                &nbsp;
+                <a href="/admin/user/update_email.php?user_id={$Info.id}" target="_blank">修改</a>
+                &nbsp;
+                {if $check_reset_password}
+                    <a stu_id_data = "{$Info.id}" href="javascript:;" class="return_remark">重置密码</a>
+                {/if}
+                <br>
+                {if $check_identity}
+                    {if $Info.identity == 0}
+                        <a href="javascript:;" onclick="vip_modify('{$Info.id}',1)" style="color: blue">标记VIP</a>
+                    {else}
+                        <a href="javascript:;" onclick="vip_modify('{$Info.id}',0)" style="color: blue">取消VIP</a>
+                    {/if}
+                {/if}
+            </td>
+        </tr>
+        {/foreach}
+    {else}
+        <tr><td colspan="14" align="center">暂无数据</td></tr>
+    {/if}
+    </tbody>
+</table>
+
+<!--重设密码弹出框-->
+<div style="display:none" id ="show_return_remark">
+    <a id="msg_type" href="" ><b>短信发送</b></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <a id="phone_type" href="" ><b>电话接通</b></a>
+</div>
+{/block}

@@ -1,0 +1,32 @@
+{block name=body}
+<table width="100%">
+    <thead>
+        <tr>
+            <th class="table_title">序号</th>
+            <th class="table_title">组织</th>
+            <th class="table_title">首次体验课完成人数(end)</th>
+            <th class="table_title">48小时内付费人数</th>
+            <th class="table_title">48小时内付费占比</th>
+            <th class="table_title">48小时内跟进占比(外呼)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {if $admin_groups}
+            {assign var="num" value=0}
+            {foreach from=$admin_groups item=group key=new_name}
+                {assign var="num" value=$num+1}
+                <tr>
+                    <td>{$num}</td>
+                    <td>{$new_name}</td>
+                    <td>{$group.free_num}</td>
+                    <td>{$group.pay_num}</td>
+                    <td>{$group.pay_percent}</td>
+                    <td>{$group.call_percent}</td>
+                </tr>
+            {/foreach}
+        {else}
+            <tr><td colspan="6" align="center">暂无任何数据</td></tr>
+        {/if}
+    </tbody>
+</table>
+{/block}

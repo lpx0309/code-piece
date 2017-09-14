@@ -1,0 +1,846 @@
+{if $blank}
+<link href="http://static.51talk.com/images/admin/skin.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/css/admin/right_css.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/js/laydate/laydate.css" rel="stylesheet" type="text/css" />
+<script src="http://static.51talk.com/js/jquery.min.js" type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.ui/jquery-ui.min.js' type="text/javascript" language="javascript"></script>
+<script src="http://static.51talk.com/js/WebCalendar.js" type="text/javascript" language="javascript"></script>
+<script type="application/javascript" src="http://static.51talk.com/js/laydate/laydate.js"></script>
+<title>课时包修改</title>
+{/if}
+<input type="hidden" id="stu_id" value="{$stu_id}">
+<script type="application/javascript">
+    var __WWW__ = '{$smarty.const.__WWW__}';
+    var na_period_modify = parseInt('{$oauths.na_period_modify}');
+    var na_period_modify_add = parseInt('{$oauths.na_period_modify_add}');
+    var na_period_modify_sub = parseInt('{$oauths.na_period_modify_sub}');
+    var na_period_modify_delay = parseInt('{$oauths.na_period_modify_delay}');
+    var na_period_modify_leave = parseInt('{$oauths.na_period_modify_leave}');
+    var na_period_modify_extend = parseInt('{$oauths.na_period_modify_extend}');
+    var lay_delay_end = '{$delay_end}';
+    var time_limit = '{$valid_end}';
+    var is_valid_delay_cancel = '{$delay_cancel}';
+    var is_valid_leave_cancel = '{$leave_cancel}';
+</script>
+{literal}
+<script type="text/javascript">
+
+    Date.prototype.Format = function (fmt) {
+        var o = {
+            "M+": this.getMonth() + 1, //月份
+            "d+": this.getDate(), //日
+            "h+": this.getHours(), //小时
+            "m+": this.getMinutes(), //分
+            "s+": this.getSeconds(), //秒
+            "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+            "S": this.getMilliseconds() //毫秒
+        };
+        if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+        for (var k in o)
+            if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+        return fmt;
+    };
+
+    function getFormatDate(dateStr , num)
+    {
+        var d = new Date(dateStr.replace(/-/g, '/'));
+        d.setDate(d.getDate() + num); // 前7天
+        return d.Format('yyyy-MM-dd');
+    }
+
+    function getDiffDateNum(startDate,endDate)
+    {
+        var startTime = new Date(Date.parse(startDate.replace(/-/g,   "/"))).getTime();
+        var endTime = new Date(Date.parse(endDate.replace(/-/g,   "/"))).getTime();
+        var num = Math.abs((startTime - endTime))/(1000*60*60*24);
+        return  num;
+    }
+
+    var all_reason = {
+        'add_patch': ["网络状况","老师缺席","上课软件问题","老师迟到补偿","老师态度不好补偿","老师背景嘈杂影响上课补偿","换老师赔偿","网络连接影响上课补偿","课程不满意赔偿","服务不满意补偿","其他"],
+        'add_gift' : ["推荐好友赠课", "续费活动赠课", "转发朋友圈赠课", "老师缺席赔偿", "老师迟到补偿", "老师态度不好补偿", "老师背景嘈杂影响上课补偿", "换老师赔偿", "网络连接影响上课补偿", "课程不满意赔偿", "服务不满意补偿", "其他"],
+        'sub_gift' : ["加错课程类型", "加错课时数", "其他"],
+        'sub_patch' : ["加错课程类型", "加错课时数", "其他"],
+        //延期开课
+        'delay_class' : ["其他辅导班", "外出（含出国/假期/旅游）", "老师排不开课需要等待", "考试（小升初/幼升小）/演出/临时活动", "生病（含住院）", "系统故障（含网络问题）", "上课软件问题", "其他"],
+        'delay_class_cancel' : ["操作失误", "学员要求提前开课", "其他"],
+        //请假休课
+        'leave_class' : ["其他辅导班", "外出（含出国/假期/旅游）", "老师排不开课需要等待", "考试/演出/临时活动", "生病（含住院）", "系统故障（含网络问题）", "上课软件问题", "课程进度跟不上", "家长的工作和时间安排问题", "其他"],
+        'leave_class_cancel' : ["操作失误", "学员要求销假", "其他"],
+        //延长期限
+        'delay_long' : ['老师缺席赔偿', '老师迟到补偿', '老师态度不好补偿', '老师背景嘈杂影响上课补偿', '换老师赔偿', '网络连接影响上课补偿', '课程不满意赔偿', '服务不满意补偿', '其他']
+    };
+
+    //切换原因
+    function cheange_reason(op)
+    {
+        var content = $('#period_package_add_real_content').val();
+        var reason;
+        var str='';
+        switch (op){
+            case 1:
+                if(content == '赠课'){
+                    reason =  all_reason['add_gift'];
+                }else{
+                    reason = all_reason['add_patch'];
+                }
+                break;
+            case 4:
+                if(content == '赠课'){
+                    reason =  all_reason['sub_gift'];
+                }else{
+                    reason = all_reason['sub_patch'];
+                }
+                break;
+            case 2:
+                reason = all_reason['delay_long'];
+                break;
+            case 6:
+                if(content == '延期开课'){
+                    reason = all_reason['delay_class'];
+                }else{
+                    reason = all_reason['delay_class_cancel'];
+                }
+                break;
+            case 7:
+                if(content == '请假'){
+                    reason = all_reason['leave_class'];
+                }else{
+                    reason = all_reason['leave_class_cancel'];
+                }
+                break;
+        }
+        str += "<option value=''>请选择</option>";
+        for(s in reason){
+            str += "<option value='"+reason[s]+"'>"+reason[s]+"</option>";
+        }
+        $('#period_package_add_reason').html(str);
+    }
+    //比较时间
+    function compare_date_time(date_str_start, date_str_end)
+    {
+        return (new Date(date_str_start).getTime()) < (new Date(date_str_end).getTime());
+    }
+
+    var lay_delay_date = {
+        'elem': '#period_package_modify_time_limit_delay',
+        'format': 'YYYY-MM-DD',
+        'min' : laydate.now(),
+        'max' : lay_delay_end,
+        'istoday' : false
+    };
+    var lay_date_long = {
+        'elem': '#period_package_modify_time_limit',
+        'format': 'YYYY-MM-DD',
+        'min' : time_limit,
+        'start' : time_limit,
+        'istoday' : false
+    };
+    var lay_date_leave_start= {
+        'elem': '#period_package_modify_time_limit_leave_start',
+        'format': 'YYYY-MM-DD',
+        'min' : laydate.now(),
+        'max' : time_limit,
+        'istoday' : false
+    };
+    var lay_date_leave_end = {
+        'elem': '#period_package_modify_time_limit_leave_end',
+        'format': 'YYYY-MM-DD',
+        'min' : laydate.now(),
+        'max' : time_limit,
+        'istoday' : false,
+        'choose': function(dates){ //选择好日期的回调
+            var num = getDiffDateNum($('#period_package_modify_time_limit_leave_start').val(),dates) + 1;
+            if(num>15){
+                alert('最大连续请假天数为15天');
+                $('#period_package_modify_time_limit_leave_end').val(getFormatDate($('#period_package_modify_time_limit_leave_start').val(),14));
+            }
+        }
+    };
+
+    function laydate_delay()
+    {
+        laydate(lay_delay_date);
+    }
+
+    function laydate_long()
+    {
+        laydate(lay_date_long);
+    }
+
+    function laydate_leave_start()
+    {
+        laydate(lay_date_leave_start);
+    }
+
+    function laydate_leave_end()
+    {
+        laydate(lay_date_leave_end);
+    }
+
+    $(function(){
+        period_package_op(1);
+        $("#period_package_add_real_content").change(function(){
+            var op = parseInt($('#period_package_op').val());
+            cheange_reason(op);
+            change_submit_status(op);
+        });
+
+        $('#period_package_modify_time_limit_delay').val('');
+        $('#period_package_modify_time_limit').val('');
+        $('#period_package_modify_time_limit_leave_start').val('');
+        $('#period_package_modify_time_limit_leave_end').val('');
+        //判断延期
+        if((new Date()).Format('yyyy-MM-dd') == lay_delay_end){
+            $('#period_package_modify_time_limit_delay').attr('placeholder','暂无可选日期');
+        }
+    });
+
+    function show_modify_entry(op)
+    {
+        var obj=$('#period_package_submit');
+        switch(op){
+            case 1:
+                if(na_period_modify_add){
+                    obj.show();
+                }else{
+                    obj.hide();
+                }
+                break;
+            case 4:
+                if(na_period_modify_sub){
+                    obj.show();
+                }else{
+                    obj.hide();
+                }
+                break;
+            case 6:
+                if(na_period_modify_delay){
+                    obj.show();
+                }else{
+                    obj.hide();
+                }
+                break;
+            case 7:
+                if(na_period_modify_leave){
+                    obj.show();
+                }else{
+                    obj.hide();
+                }
+                break;
+            case 2:
+                if(na_period_modify_extend){
+                    obj.show();
+                }else{
+                    obj.hide();
+                }
+                break;
+        }
+    }
+
+    function getRealContent(op) {
+        switch (op){
+            case 1:
+            case 4:
+                return '<option value="补课">补课</option> <option value="赠课">赠课</option>';
+                break;
+            case 6:
+                return '<option value="延期开课">延期开课</option> <option value="提前开课">提前开课</option>';
+                break;
+            case 7:
+                return '<option value="请假">请假</option> <option value="销假">销假</option>';
+                break;
+        }
+    }
+
+
+    function change_submit_status(op) {
+        $('.period_package_submit').attr('disabled',false);
+        $('#period_package_modify_time_limit_delay').attr('placeholder','请点击选择');
+        $('#period_package_modify_time_limit_leave_start').attr('placeholder','请点击选择');
+        $('#period_package_modify_time_limit_leave_end').attr('placeholder','请点击选择');
+        var real_content = $('#period_package_add_real_content').val();
+        if(op == 6){
+            if($('#delay_count').html() == 0 && real_content == '延期开课'){
+                $('.period_package_submit').attr('disabled',true);
+                $('#period_package_modify_time_limit_delay').attr('placeholder','暂无可选日期');
+            }else if(real_content=='提前开课' && is_valid_delay_cancel=='0'){
+                $('.period_package_submit').attr('disabled',true);
+                $('#period_package_modify_time_limit_delay').attr('placeholder','暂无可选日期');
+            }else{
+                $('.period_package_submit').attr('disabled',false);
+            }
+        }else if(op == 7){
+            if($('#leave_count').html() == 0 && real_content == '请假'){
+                $('.period_package_submit').attr('disabled',true);
+                $('#period_package_modify_time_limit_leave_start').attr('placeholder','暂无可选日期');
+                $('#period_package_modify_time_limit_leave_end').attr('placeholder','暂无可选日期');
+            }else if(real_content == '销假' && is_valid_leave_cancel == '0'){
+                $('.period_package_submit').attr('disabled',true);
+                $('#period_package_modify_time_limit_leave_start').attr('placeholder','暂无可选日期');
+                $('#period_package_modify_time_limit_leave_end').attr('placeholder','暂无可选日期');
+            }else{
+                $('.period_package_submit').attr('disabled',false);
+            }
+        }
+    }
+
+    //课时包操作
+    function period_package_op(op){
+        op = parseInt(op);
+        $('#period_package_add_real_content').html(getRealContent(op));
+        cheange_reason(op);
+        show_modify_entry(op);
+        change_submit_status(op);
+        switch (op){
+            case 1:
+                period_package_content_change($('#period_package_add_content').val());
+                $('.period_package_add_content').show();
+                $('.period_package_add_real_content').show();
+                $('.period_package_na_pri_total').hide();
+                $('.period_package_ua_total').show();
+                $('.period_package_free_lession').hide();
+                $('.period_package_modify_time_limit').hide();
+                $('.period_package_class_time').show();
+                $('.period_package_add_reason').show();
+                $('.period_package_modify_time_limit_delay').hide();
+                $('.period_package_modify_time_limit_leave').hide();
+                $('.period_package_modify_time_limit_delay_count').hide();
+                $('.period_package_modify_time_limit_leave_count').hide();
+                break;
+            case 2:
+                $('.period_package_add_content').hide();
+                $('.period_package_add_real_content').hide();
+                $('.period_package_na_pri_total').show();
+                $('.period_package_ua_total').hide();
+                $('.period_package_free_lession').show();
+                $('.period_package_modify_time_limit').show();
+                $('.period_package_class_time').hide();
+                $('.period_package_add_reason').show();
+                $('.period_package_modify_time_limit_delay').hide();
+                $('.period_package_modify_time_limit_leave').hide();
+                $('.period_package_modify_time_limit_delay_count').hide();
+                $('.period_package_modify_time_limit_leave_count').hide();
+                break;
+            case 6:
+                $('.period_package_modify_time_limit_delay').show();
+                $('.period_package_add_real_content').show();
+                $('.period_package_modify_time_limit_leave').hide();
+                $('.period_package_modify_time_limit_delay_count').show();
+                $('.period_package_modify_time_limit_leave_count').hide();
+                $('.period_package_add_content').hide();
+                $('.period_package_class_time').hide();
+                $('.period_package_ua_total').hide();
+                $('.period_package_na_pri_total').show();
+                $('.period_package_free_lession').show();
+                $('.period_package_modify_time_limit').hide();
+
+                break;
+            case 7:
+                $('.period_package_add_real_content').show();
+                $('.period_package_modify_time_limit_leave').show();
+                $('.period_package_modify_time_limit_delay_count').hide();
+                $('.period_package_modify_time_limit_leave_count').show();
+                $('.period_package_add_content').hide();
+                $('.period_package_na_pri_total').show();
+                $('.period_package_free_lession').show();
+                $('.period_package_modify_time_limit_delay').hide();
+                $('.period_package_modify_time_limit').hide();
+                $('.period_package_ua_total').hide();
+                $('.period_package_class_time').hide();
+                break;
+            case 4:
+                period_package_content_change($('#period_package_add_content').val());
+                $('.period_package_add_content').show();
+                $('.period_package_add_real_content').show();
+                $('.period_package_na_pri_total').hide();
+                $('.period_package_ua_total').show();
+                $('.period_package_free_lession').hide();
+                $('.period_package_modify_time_limit').hide();
+                $('.period_package_class_time').show();
+                $('.period_package_add_reason').show();
+                $('.period_package_del_reason').hide();
+                $('.period_package_modify_time_limit_delay').hide();
+                $('.period_package_modify_time_limit_leave').hide();
+                $('.period_package_modify_time_limit_delay_count').hide();
+                $('.period_package_modify_time_limit_leave_count').hide();
+            default:
+                break;
+        }
+    }
+    //课时包操作（添加，延长期限，减少）
+    function period_package_click(){
+        var op = parseInt($('#period_package_op').val());
+        //学员ID
+        var stu_id = $('#user_id').val();
+        if(!stu_id){
+            var stu_id=$('#stu_id').val();
+        }
+
+        if(!$('#period_package_add_reason').val()) {
+            alert('请选择处理原因!');
+            return false;
+        }
+        //备注
+        if(!$('#period_package_remark').val()){
+            if(!$('#period_package_add_reason').val() || $('#period_package_add_reason').val() == '其他'){
+                alert('请填写备注！');
+                return false;
+            }
+        }
+        var real_content = $('#period_package_add_real_content').val();
+        switch (op){
+            case 1:
+                var stu_point_id = $('#period_package_add_content').val();
+                if(stu_point_id){
+                    var na_type = $('#'+stu_point_id+'_type').val();
+                }else{
+                    var na_type = $('#na_type').val();
+                }
+                var class_name = '';
+                if(na_type == 'na_pri'){
+                    class_name = '北美外教一对一课程';
+                }else if(na_type == 'na_open'){
+                    class_name = '精品绘本阅读课';
+                }
+                var class_time = $('#period_package_class_time').val();
+                //点数
+                if ($.trim(class_time) == '' || $.trim(class_time) == '0') {
+                    alert('点数不能为空或为0！');
+                    return false;
+                } else if (class_time && isNaN(class_time)) {
+                    alert('点数必须为数字！');
+                    return false;
+                }else if (class_time && Math.floor(class_time) != class_time) {
+                    alert('点数必须为整数！');
+                    return false;
+                }
+                var period_package_class_time = parseInt(class_time);
+                var num = period_package_class_time*3;
+                if(na_type == 'na_open'){
+                    num = 0;
+                }
+                var confirmStr = "确认为用户添加"+period_package_class_time+"节"+class_name+"，有效期将延至"+getFormatDate($('#time_limit').html(), num)+"？";
+                if(!confirm(confirmStr)){
+                    return false;
+                }
+                break;
+            case 2://延长期限
+                if(!$('#period_package_modify_time_limit').val()) {
+                    alert('请选择有效期!');
+                    return false;
+                }
+                var time_limit = $('#time_limit').html();
+                var modify_time_limit = $('#period_package_modify_time_limit').val();
+                if(!compare_date_time(time_limit, modify_time_limit)){
+                    alert('延长期限必须大于当前有效日期！');
+                    return false;
+                }
+                if (!confirm('修改完成后，课时包有效期将从'+time_limit+' 更新为 '+modify_time_limit+'，确定修改吗？')) {
+                    return false;
+                }
+                var na_type = 'na_pri';
+                break;
+            case 4://减少
+                var period_package_ua_total = parseInt($('#period_package_ua_total').html());
+                var class_time = $('#period_package_class_time').val();
+
+                if ($.trim(class_time) == '' || $.trim(class_time) == '0') {
+                    alert('点数不能为空或为0！');
+                    return false;
+                } else if (class_time && isNaN(class_time)) {
+                    alert('点数必须为数字！');
+                    return false;
+                } else if (class_time && Math.floor(class_time) != class_time) {
+                    alert('点数必须为整数！');
+                    return false;
+                }
+                if(period_package_ua_total == 0){
+                    alert('剩余课时数为0！');
+                    return false;
+                }
+                var stu_point_id = $('#period_package_add_content').val();
+                var na_type = $('#'+stu_point_id+'_type').val();
+                if(na_type == 'na_pri'){
+                    class_name = '北美外教一对一课程';
+                }else if(na_type == 'na_open'){
+                    class_name = '精品绘本阅读课';
+                }
+                var period_package_class_time = parseInt($('#period_package_class_time').val());
+                //减少课时不能大于持有总课时
+                if (period_package_class_time > parseInt($('#period_package_ua_total').html())) {
+                    alert('减少课时不能大于剩余课时');
+                    $('#period_package_class_time').val(parseInt($('#period_package_ua_total').html()));
+                    return false;
+                }
+                var period_package_class_time = parseInt(class_time);
+                var num = -period_package_class_time*3;
+                if(na_type == 'na_open'){
+                    num = 0;
+                }
+                var confirmStr = "确认为用户减少"+period_package_class_time+"节"+class_name+"，有效期将缩短至"+getFormatDate($('#time_limit').html(), num)+"？";
+                if(!confirm(confirmStr)){
+                    return false;
+                }
+                break;
+            //延期
+            case 6:
+                var time_limit_delay = $('#period_package_modify_time_limit_delay').val();
+                var time_limit = $('#time_limit').html();
+                if(!compare_date_time((new Date()).Format('yyyy-MM-dd'), time_limit_delay)){
+                    alert('开课日期必须大于当前日期！');
+                    return false;
+                }
+                if(!compare_date_time(time_limit_delay,time_limit)){
+                    alert('开课日期必须小于有效期！');
+                    return false;
+                }
+                var confirmStr = '';
+                if(real_content == '延期开课'){
+                    confirmStr = "确认延期开课至"+time_limit_delay+"吗？延期开课期间不能约课！";
+                }else{
+                    if(!compare_date_time(time_limit_delay, lay_delay_end)){
+                        alert('开课日期必须大于当前日期！');
+                        return false;
+                    }
+                    confirmStr = "确认提前开课至"+time_limit_delay+"吗？不会增加延期开课次数！";
+                }
+                if(!confirm(confirmStr)){
+                    return false;
+                }
+                break;
+            //休学
+            case 7:
+                var time_limit_leave_start = $('#period_package_modify_time_limit_leave_start').val();
+                var time_limit_leave_end = $('#period_package_modify_time_limit_leave_end').val();
+                var time_limit = $('#time_limit').html();
+                if(compare_date_time(time_limit,time_limit_leave_start) || compare_date_time(time_limit,time_limit_leave_end)){
+                    alert('操作日期不应大于当前有效期日期！');
+                    return false;
+                }
+                if(compare_date_time(time_limit_leave_end,time_limit_leave_start)){
+                    alert('请选择正确日期！');
+                    return false;
+                }
+                var num = getDiffDateNum(time_limit_leave_start,time_limit_leave_end) + 1;
+                if(num>15){
+                    alert('操作日期最多15天！');
+                    return false;
+                }
+                var confirmStr = '';
+                if(real_content == '请假'){
+                    confirmStr = "确认为用户请假"+num+"天吗？将消耗1次请假机会！请假期间不能约课！";
+                }else{
+                    confirmStr = "确认"+time_limit_leave_start+"至"+time_limit_leave_end+"恢复上课吗？不会增加请假次数！";
+                }
+
+                if(!confirm(confirmStr)){
+                    return false;
+                }
+                break;
+            default:
+                break;
+        }
+        var remark = $('#period_package_remark').val();
+        var reason = $('#period_package_add_reason').val();
+        var data = {
+            'op':op,
+            'reason' : reason,
+            'remark' : remark,
+            'stu_id' : stu_id,
+            'time_limit' : $('#time_limit').html(),
+        };
+        if(op == 1 || op == 4){//增加减少
+            data['stu_point_id'] = stu_point_id;
+            data['na_type'] = na_type;
+            data['period_class_time'] = period_package_class_time;
+            data['real_content'] = real_content;
+        }else if(op == 2){
+            data['time_limit_long'] = modify_time_limit;
+            data['na_type'] = na_type;
+        }else if(op == 7){
+            data['real_content'] = real_content;
+            data['time_limit_leave_start'] = time_limit_leave_start;
+            data['time_limit_leave_end'] = time_limit_leave_end;
+        }else if(op == 6){
+            data['real_content'] = real_content;
+            data['time_limit_delay'] = time_limit_delay;
+        }else{
+            return false;
+        }
+        $.ajax({
+            'url':__WWW__+'/nat/Admin/NaPoint/doModify',
+            'type': 'GET',
+            'dataType': 'jsonp',
+            'data': data,
+            'beforeSend':function(){
+                $('.period_package_submit').attr('disabled',true);
+                $('.period_package_submit').html('提交中...');
+            },
+            'success':function(data){
+                if(data.code == 0){
+                    alert('修改成功');
+                }else{
+                    alert(data.msg);
+                }
+                window.location.reload();
+            }
+        });
+    }
+
+    if(typeof html_decode !== 'function'){
+        function html_decode(str)
+        {
+            var tmp = document.createElement('div');
+            tmp.innerHTML = str;
+            var output = tmp.innerText || tmp.textContent;
+            tmp = null;
+            return output;
+        }
+    }
+
+    //课时包流水
+    function period_package_record(){
+        var stu_id = $('#user_id').val();
+        if(!stu_id){
+            var stu_id=$('#stu_id').val();
+        }
+        $("body").append('<div id="period_package_record">载入中...</div>');
+        $("#period_package_record").dialog({
+            modal: true,
+            autoOpen:true,
+            resizable:true,
+            width:1000,
+            height:500,
+            title:'课时包流水记录',
+            open:function(){
+                $.ajax({
+                    'url': __WWW__+'/nat/Admin/NaPoint/showPackageList?stu_id='+stu_id,
+                    'type' : 'GET',
+                    'dataType' : 'jsonp',
+                    'success' : function(data){
+                        if(data.code == 0){
+                            $("#period_package_record").html(html_decode(data.content));
+                        }
+
+                    }
+                });
+            },
+            close:function(){
+                $(this).remove();
+            }
+        });
+    }
+    function period_package_content_change(type){
+        $('#period_package_ua_total').html($('#'+type+'_total').val());
+    }
+
+    //课时控件
+    function period_package_class_time(k){
+        var min = 1;
+        var period_package_class_time = $('#period_package_class_time').val();
+        if(k) {
+            period_package_class_time++;
+        }else{
+            period_package_class_time--;
+        }
+        if(period_package_class_time <= min){
+            period_package_class_time = 1;
+        }
+        if($('#period_package_op').val()==4) {
+            //减少课时不能超过剩余
+            var max = parseInt($('#period_package_ua_total').html());
+            if (period_package_class_time >= max) {
+                period_package_class_time = max;
+            }
+        }
+        $('#period_package_class_time').val(period_package_class_time);
+    }
+
+    //补齐购买时缺少的记录
+    function stu_point_fix(na_type) {
+        if(!confirm("确定补齐？")){
+            return false;
+        }
+        //学员ID
+        var stu_id = $('#user_id').val();
+        if(!stu_id){
+            var stu_id=$('#stu_id').val();
+        }
+        var data = {
+            'op':5,
+            'stu_id':stu_id,
+            'na_type':na_type,
+        };
+        $.ajax({
+            'url':__WWW__+'/nat/Admin/NaPoint/doModify',
+            'type': 'GET',
+            'dataType': 'jsonp',
+            'data': data,
+            'beforeSend':function(){
+            },
+            'success':function(data){
+                if(data.code == 0){
+                    alert('修改成功');
+                }else{
+                    alert(data.msg);
+                }
+                window.location.reload();
+            }
+        });
+    }
+</script>
+{/literal}
+
+<table width="100%">
+    <thead>
+    <tr>
+        <th class="table_title" colspan="2">
+            课时包套餐修改&nbsp;
+            <a href="javascript:;" onclick="period_package_record()" style="color: red">查看流水</a>
+        </th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <th width="20%" height="23" align="right">操作：</th>
+        <td width="80%">
+            <select id="period_package_op" onchange="period_package_op(this.value)" {if !$stu_point} disabled {/if}>
+            <option value="1">添加</option>
+            <option value="4">减少</option>
+            <option value="6">延期开课</option>
+            <option value="7">休学休假</option>
+            <option value="2">延长期限</option>
+            <!--<option value="3">退费</option>-->
+            </select>
+        </td>
+    </tr>
+    <!--1、添加，2、减少-->
+    <tr class="period_package_add_real_content">
+        <th width="20%" height="23" align="right" style="font-weight: normal">操作内容</th>
+        <td width="80%">
+            <select id="period_package_add_real_content">
+                <option value="补课">补课</option>
+                <option value="赠课">赠课</option>
+            </select>
+        </td>
+    </tr>
+    <tr class="period_package_add_content">
+        <th width="20%" height="23" align="right" style="font-weight: normal">课程类型：</th>
+        <td width="80%">
+            {if $stu_point}
+            <select id="period_package_add_content" onchange="period_package_content_change(this.value)">
+                {foreach from=$stu_point item=info}
+                <option value="{$info.id}">
+                    {if $info.type=='na_pri'}北美外教一对一课程{/if}
+                    {if $info.type=='na_open'}精品绘本阅读课{/if}
+                </option>
+                {/foreach}
+            </select>
+            {foreach from=$stu_point item=info}
+            <input type="hidden" value="{$info.content}" id="{$info.id}_total">
+            <input type="hidden" value="{$info.type}" id="{$info.id}_type">
+            {/foreach}
+            {else}
+            <select id="na_type">
+                <option value="na_pri">北美外教一对一课程</option>
+                <option value="na_open">精品绘本阅读课</option>
+            </select>
+            {/if}
+            {if $modify_right == 1 && $lack_type}
+            该学员在购买课时包时缺少“
+            {if $lack_type == 'na_pri'}北美外教一对一课程{/if}
+            {if $lack_type == 'na_open'}精品绘本公开课{/if}
+            ”的课时记录，
+            <a href="javascript:;" onclick="stu_point_fix('{$lack_type}')">点击补齐</a>
+            {/if}
+        </td>
+    </tr>
+    <!--2、延长期限-->
+    <tr class="period_package_na_pri_total">
+        <th width="20%" height="23" align="right" style="font-weight: normal">美国小学剩余课时：</th>
+        <td width="80%" id="period_package_na_pri_total">
+            {foreach from=$stu_point item=info}
+            {if $info.type=='na_pri'}
+            {$info.content}
+            {/if}
+            {/foreach}
+        </td>
+    </tr>
+    <!--1、添加，4、减少-->
+    <tr class="period_package_ua_total">
+        <th width="20%" height="23" align="right" style="font-weight: normal">剩余课时：</th>
+        <td width="80%" id="period_package_ua_total">0</td>
+    </tr>
+    <!--2、延长期限-->
+    <tr class="period_package_free_lession">
+        <th width="20%" height="23" align="right" style="font-weight: normal">公开课剩余课时：</th>
+        <td width="80%" id="period_package_free_lession">
+            {foreach from=$stu_point item=info}
+            {if $info.type=='na_open'}
+            {$info.content}
+            {/if}
+            {/foreach}
+        </td>
+    </tr>
+    <!--1、添加，2、延长期限 4、减少-->
+    <tr>
+        <th width="20%" height="23" align="right" style="font-weight: normal">有效期至：</th>
+        <td width="80%" id="time_limit">{$valid_end}</td>
+    </tr>
+    <!--2、延长期限-->
+    <tr class="period_package_modify_time_limit">
+        <th width="20%" height="23" align="right" style="font-weight: normal">调整有效期：</th>
+        <td width="80%"><input placeholder="请点击选择" type="text" id="period_package_modify_time_limit" size="10" readonly onclick="laydate_long()"></td>
+    </tr>
+    <!--6延期开课-->
+    <tr class="period_package_modify_time_limit_delay_count">
+        <th width="20%" height="23" align="right" style="font-weight: normal">剩余延期次数：</th>
+        <td width="80%" id="delay_count">{$delay_count}</td>
+    </tr>
+    <tr class="period_package_modify_time_limit_delay">
+        <th width="20%" height="23" align="right" style="font-weight: normal">选择开课日期：</th>
+        <td width="80%"><input placeholder="请点击选择" type="text" id="period_package_modify_time_limit_delay"  size="10" readonly onclick="laydate_delay()"></td>
+    </tr>
+    <!--7休课请假-->
+    <tr class="period_package_modify_time_limit_leave_count">
+        <th width="20%" height="23" align="right" style="font-weight: normal">剩余请假次数：</th>
+        <td width="80%" id="leave_count">{$leave_count}</td>
+    </tr>
+    <tr class="period_package_modify_time_limit_leave">
+        <th width="20%" height="23" align="right" style="font-weight: normal">选择日期：</th>
+        <td width="80%"><input placeholder="请点击选择" type="text" id="period_package_modify_time_limit_leave_start" size="10" readonly onclick="laydate_leave_start()"> 至 <input placeholder="请点击选择" type="text" id="period_package_modify_time_limit_leave_end" size="10" readonly onclick="laydate_leave_end()"></td>
+    </tr>
+    <!--1、添加，4、减少-->
+    <tr class="period_package_class_time">
+        <th width="20%" height="23" align="right" style="font-weight: normal">操作量：</th>
+        <td>
+            <img onclick="period_package_class_time()" src="../../images/reduce.png" alt="点击减少">&nbsp;
+            <input type="text" name="period_package_class_time" id="period_package_class_time" size="3" value="1">&nbsp;
+            <img onclick="period_package_class_time(1)" src="../../images/add.png" alt="点击增加">
+        </td>
+    </tr>
+    <!--1、添加，2、延长期限，4、减少-->
+    <tr class="period_package_add_reason">
+        <th width="20%" height="23" align="right" style="font-weight: normal">处理原因：</th>
+        <td width="80%">
+            <select id="period_package_add_reason">
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <th width="20%" height="23" align="right">填写备注：</th>
+        <td width="80%">
+            <textarea id="period_package_remark" rows='5' cols='100'></textarea>
+        </td>
+    </tr>
+    <tr id="period_package_submit">
+        <th colspan="2">
+            {if $oauths.na_period_modify}
+            <button class="period_package_submit" onclick="period_package_click()">提交</button>
+            {/if}
+        </th>
+    </tr>
+    </tbody>
+</table>

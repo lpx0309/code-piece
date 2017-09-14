@@ -1,0 +1,33 @@
+{block name=body}
+<table width="100%">
+    <thead>
+        <tr>
+            <th class="table_title">{$admin_type}分组</th>
+            <!--<th class="table_title">{$admin_type}分配新leads数</th>-->
+            <th class="table_title">{$admin_type}填写微信数</th>
+            {if $admin_type=='CC'}
+                <th class="table_title">CC微信已加学员数</th>
+            {/if}
+        </tr>
+    </thead>
+    <tbody>
+        {if $admin_groups}
+            {foreach from=$admin_groups item=count key=new_name}
+                <tr>
+                    <td>{$new_name}</td>
+                    <!--<td>{$count.dispath}</td>-->
+                    <td>{$count.count}</td>
+                    {if $admin_type=='CC'}
+                        <td>
+                            <span id="count_{$count.old_name}" ondblclick="added_count_modify('{$count.old_name}')" title="双击修改" style="display: {if $count.added==0 && $start_time == $end_time} none {/if}">{$count.added}</span>
+                            <input type="text" id="count_text_{$count.old_name}" value="{$count.added}" size="10" onblur="added_count_save('{$count.old_name}')" style="display: {if $count.added!=0 || $start_time != $end_time} none {/if}">
+                        </td>
+                    {/if}
+                </tr>
+            {/foreach}
+        {else}
+            <tr><td colspan="4" align="center">暂无任何数据</td></tr>
+        {/if}
+    </tbody>
+</table>
+{/block}

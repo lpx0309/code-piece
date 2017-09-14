@@ -1,0 +1,371 @@
+{block name=head}
+<link href="http://static.51talk.com/images/admin/skin.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/css/admin/right_css.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css">
+<script src="http://static.51talk.com/js/jquery.min.js" type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.ui/jquery-ui.min.js' type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.form.js' type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/WebCalendar.js'></script>
+{literal}
+<script>
+    $(function () {
+        $('#pop_event').dialog({
+            width: '420',
+            /*height: '500',*/
+            autoOpen: false,
+            modal: true,
+            buttons: {
+                '取消': function () {
+                    $(this).dialog('close');
+                },
+                '确定': function () {
+                    if (!$('#event_name').val()) {
+                        alert('请填写活动名称！');
+                        return false;
+                    }
+                    if ($('#event_name').val().length>20) {
+                        alert('活动名称太长，不能超过20个字符！');
+                        return false;
+                    }
+                    if (!$('#start_date').val()) {
+                        alert('请选择活动开始时间！');
+                        return false;
+                    }
+                    if (!$('#end_date').val()) {
+                        alert('请选择活动结束时间！');
+                        return false;
+                    }
+                    if (!$('#cycle').val()) {
+                        alert('请填写活动周期！');
+                        return false;
+                    }
+                    if (parseInt($('#cycle').val())<=0) {
+                        alert('活动周期必须大于0天！');
+                        return false;
+                    }
+                    if (!$('#pay_min').val() || !$('#pay_max').val()) {
+                        alert('请填写订单金额！');
+                        return false;
+                    }
+                    if (parseInt($('#pay_min').val()) >= parseInt($('#pay_max').val())) {
+                        alert('订单最小金额必须小于最大金额！');
+                        return false;
+                    }
+                    $.ajax({
+                        url: 'EventModify',
+                        type: 'POST',
+                        data: $('#form_event').serialize(),
+                        beforeSend:function () {
+                            pop_loading();
+                        },
+                        success: function (res) {
+                            if(isNaN(res)) {
+                                pop_loading_close();
+                                alert(res);
+                            }else{
+                                window.location.reload();
+                            }
+                        }
+                    });
+                }
+            }
+        });
+        //添加活动
+        $('#event_add').click(function () {
+            $('#form_event').resetForm();
+            $('#event_id').val('');
+            $('#gift_rule').html('')
+            add_rule();
+            $('#pop_event').dialog('option','title','添加活动');
+            $('#pop_event').dialog('open');
+        })
+        //修改活动
+        $('.event_modify').click(function () {
+            var event_id = $(this).attr('modify_id');
+            $('#form_event').resetForm();
+            $('#event_id').val(event_id);
+            $('#gift_rule').html('');
+            $.ajax({
+                url:'getEvent',
+                type:'GET',
+                data:'event_id='+event_id,
+                dataType:'json',
+                beforeSend:function () {
+                    pop_loading();
+                },
+                success:function (event) {
+                    pop_loading_close();
+                    console.log(event);
+                    $('#event_name').val(event.event_name);
+                    $('#start_date').val(event.start_date);
+                    $('#end_date').val(event.end_date);
+                    $('#cycle').val(event.cycle);
+                    $('#user_type').val(event.user_type);
+                    $('#appoint_type').val(event.appoint_type);
+                    $('#pay_type').val(event.pay_type);
+                    $('#pay_min').val(event.pay_min);
+                    $('#pay_max').val(event.pay_max);
+                    $('#gift_type').val(event.gift_type);
+                    if(event.rule) {
+                        for (i in event.rule) {
+                            add_rule(event.rule[i]);
+                        }
+                    }else{
+                        add_rule();
+                    }
+                    $('#pop_event').dialog('option','title','修改活动');
+                    $('#pop_event').dialog('open');
+                }
+            })
+        })
+        //删除活动
+        $('.event_delete').click(function () {
+            if(!confirm('确定删除这个活动？')){
+                return false;
+            }
+            var event_id = $(this).attr('delete_id');
+            $.ajax({
+                url: 'EventDelete',
+                type: 'POST',
+                data: 'event_id='+event_id,
+                beforeSend:function () {
+                    pop_loading();
+                },
+                success: function (res) {
+                    if(isNaN(res)) {
+                        pop_loading_close();
+                        alert(res);
+                    }else{
+                        window.location.reload();
+                    }
+                }
+            });
+        })
+        //修改状态
+        $('.event_status').click(function () {
+            if(!confirm('确定'+$(this).html()+'这个活动？')){
+                return false;
+            }
+            var event_id = $(this).attr('status_id');
+            $.ajax({
+                url: 'EventStatus',
+                type: 'POST',
+                data: 'event_id='+event_id,
+                beforeSend:function () {
+                    pop_loading();
+                },
+                success: function (res) {
+                    if(isNaN(res)) {
+                        pop_loading_close();
+                        alert(res);
+                    }else{
+                        window.location.reload();
+                    }
+                }
+            });
+        });
+        only_number()
+    });
+    //添加规则
+    function add_rule(rule) {
+        if(!rule){
+            var rule = [];
+            rule.id = '';
+            rule.range_start = '';
+            rule.range_end = '';
+            rule.gift_point = '';
+        }
+        var html = '';
+        html += '<input type="hidden" name="rule_id[]" value="'+rule.id+'" >';
+        html += '<input type="text" size="3" name="range_start[]" class="number" value="'+rule.range_start+'"> - <input type="text" size="3" name="range_end[]" class="number" value="'+rule.range_end+'"> 赠送 <input type="text" size="3" name="gift_point[]" class="number" value="'+rule.gift_point+'"> 次卡';
+        if ($('#gift_rule').html() == '') {
+            html += '<a href="javascript:;" onclick="add_rule()">+</a>';
+        }
+        html = '<p>' + html + '</p>';
+        $('#gift_rule').append(html);
+        only_number()
+    }
+    //只能填写数字
+    function only_number() {
+        $('.number').keyup(function () {
+            if(isNaN($(this).val())){
+                $(this).val('');
+            }
+        })
+    }
+    //加载页面
+    function pop_loading(){
+        var loading='<img src="http://static.51talk.com/images/admin/loadding2.gif" />';
+        $("body").append('<div id="pop_loading"><div style="text-align:center">'+loading+'</div></div>');
+        $("#pop_loading").dialog({
+            bgiframe: true,
+            autoOpen: true,
+            resizable: false,
+            modal: true,
+            height: 160,
+            width: 300,
+            open: function(){
+                $(this).parent().find('.ui-dialog-titlebar').hide();
+            },
+            close: function(){
+                $(this).remove();
+            }
+        });
+    }
+    //加载页面关闭
+    function pop_loading_close(){
+        $('#pop_loading').dialog('close');
+    }
+</script>
+{/literal}
+{/block}
+
+{block name=body}
+<div id="pop_event">
+    <form id="form_event">
+        <input type="hidden" name="event_id" id="event_id">
+        <table width="100%">
+            <tr>
+                <th>活动名称</th>
+                <td><input type="text" name="event_name" id="event_name"></td>
+            </tr>
+            <tr>
+                <th>活动时间</th>
+                <td>
+                    <input type="text" name="start_date" id="start_date" size="10" value="" onclick="SelectDate(this)" readonly="readonly"> -
+                    <input type="text" name="end_date" id="end_date"  size="10" value="" onclick="SelectDate(this)" readonly="readonly">
+                </td>
+            </tr>
+            <tr>
+                <th>活动周期</th>
+                <td>
+                    <input type="text" name="cycle" id="cycle" class="number" size="3" value=""> 天
+                </td>
+            </tr>
+            <tr>
+                <th>用户类型</th>
+                <td>
+                    <select name="user_type" id="user_type">
+                        {foreach from=$user_type item=item key=key}
+                            <option value="{$key}">{$item}</option>
+                        {/foreach}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th>约课类型</th>
+                <td>
+                    <select name="appoint_type" id="appoint_type">
+                        {foreach from=$appoint_type item=item key=key}
+                            <option value="{$key}">{$item}</option>
+                        {/foreach}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th>订单类型</th>
+                <td>
+                    <select name="pay_type" id="pay_type" disabled>
+                        <!--{foreach from=$pay_type item=item key=key}
+                            <option value="{$key}">{$item}</option>
+                        {/foreach}-->
+                        <option>首单</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th>订单金额</th>
+                <td>
+                    <input type="text" value="" size="3" name="pay_min" id="pay_min" class="number"> -
+                    <input type="text" value="" size="3" name="pay_max" id="pay_max" class="number"> 元
+                </td>
+            </tr>
+            <tr>
+                <th>赠课类型</th>
+                <td>
+                    <select name="gift_type" id="gift_type">
+                        {foreach from=$gift_type item=item key=key}
+                            <option value="{$key}">{$item}</option>
+                        {/foreach}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th>赠送规则</th>
+                <td id="gift_rule"></td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+<form method="get">
+    活动名称：<input type="text" name="event_name" value="{$param.event_name}">
+    用户类型：
+    <select name="user_type">
+        {foreach from=$user_type item=item key=key}
+            <option value="{$key}" {if $param.user_type==$key} selected {/if}>{$item}</option>
+        {/foreach}
+    </select>
+    创建时间：
+    <input type="text" name="start_date" size="10" value="{$param.start_date}" onclick="SelectDate(this)" readonly="readonly">
+    <input type="text" name="end_date"  size="10" value="{$param.end_date}" onclick="SelectDate(this)" readonly="readonly">
+    <button type="submit">确定</button>
+    <a href="javascript:;" id="event_add" style="float: right">添加活动</a>
+</form>
+<table width="100%">
+    <thead>
+        <tr>
+            <th>序号</th>
+            <th>活动名称</th>
+            <th width="11%">活动时间</th>
+            <th>周期（天）</th>
+            <th>用户类型</th>
+            <th>约课类型</th>
+            <th>订单类型</th>
+            <th>订单金额（元）</th>
+            <th>赠课类型</th>
+            <th>活动状态</th>
+            <th width="15%">创建信息</th>
+            <th width="17%">最后修改信息</th>
+            <th width="7%">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {if $event_list}
+            {foreach from=$event_list item=event key=key}
+                <tr>
+                    <td>{$key+1}</td>
+                    <td>{$event.event_name}</td>
+                    <td>
+                        开始时间：{$event.start_time}<br>
+                        结束时间：{$event.end_time}
+                    </td>
+                    <td align="center">{$event.cycle}</td>
+                    <td>{$event.user_type}</td>
+                    <td>{$event.appoint_type}</td>
+                    <td>{$event.pay_type}</td>
+                    <td>{$event.pay_min} - {$event.pay_max}</td>
+                    <td>{$event.gift_type}</td>
+                    <td>{$event.status_word}</td>
+                    <td>
+                        创建人：{$event.creater}<br>
+                        创建时间：{$event.create_time}
+                    </td>
+                    <td>
+                        最后修改人：{$event.updater}<br>
+                        最后修改时间：{$event.update_time}
+                    </td>
+                    <td align="center">
+                        <a href="javascript:;" class="event_modify" modify_id="{$event.id}">修改</a>
+                        <!--<a href="javascript:;" class="event_delete" delete_id="{$event.id}">删除</a>-->
+                        <a href="javascript:;" class="event_status" status_id="{$event.id}">{if $event.status==0}启动{else}停止{/if}</a>
+                    </td>
+                </tr>
+            {/foreach}
+            <tr><td align="right" colspan="20">{$Page}</td></tr>
+        {else}
+            <tr><td align="center" colspan="20">暂无活动</td></tr>
+        {/if}
+    </tbody>
+</table>
+{/block}

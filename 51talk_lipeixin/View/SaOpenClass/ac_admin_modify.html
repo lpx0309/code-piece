@@ -1,0 +1,28 @@
+{block name=body}
+<form>
+    <table>
+        <tr>
+            <th class="table_title">老师帐号：</th>
+            <td>
+                <select id="teacher" style="width: 280px">
+                    <option value="">请选择</option>
+                    {foreach from=$ac_teacher_list item=teacher}
+                        <option value="{$teacher.id}" {if $ac_admin_relation.ac_teacher_id == $teacher.id} selected {/if}>{$teacher.user_name}</option>
+                    {/foreach}
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <th class="table_title">销售帐号：</th>
+            <td>
+                <select id="admin" style="width: 280px">
+                    <option value="">请选择</option>
+                    {foreach from=$admin_list item=admin}
+                        <option value="{$admin.id}" {if $ac_admin_relation.admin_id == $admin.id} selected {/if}>{$admin.user_name}</option>
+                    {/foreach}
+                </select>
+            </td>
+        </tr>
+    </table>
+</form>
+{/block}

@@ -1,0 +1,111 @@
+{block name=head}
+<link href="http://static.51talk.com/images/admin/skin.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/css/admin/right_css.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css">
+<script src="http://static.51talk.com/js/jquery.min.js" type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.ui/jquery-ui.min.js' type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.form.js' type="text/javascript" language="javascript"></script>
+{literal}
+<script>
+    $(function () {
+        $('#identity_switch').click(function () {
+            var switch_type = $('#switch_type').val();
+            if(!switch_type){
+                alert('没有权限！');
+                return false;
+            }
+            var stu_id = $('#stu_id').val();
+            if(!stu_id){
+                alert('请输入学员ID！');
+                return false;
+            }
+            if(isNaN(stu_id)){
+                alert('学员ID不正确！');
+                return false;
+            }
+            $('#form_switch').ajaxSubmit({
+                url:'IdentitySwitch/SwitchAction',
+                type: 'POST',
+                async: true,
+                beforeSubmit: function () {
+
+                },
+                success:function (msg) {
+                    if(msg) {
+                        alert(msg);
+                        //console.log(msg);
+                    }else{
+                        window.location.reload();
+                    }
+                }
+            });
+            return false;
+        });
+    });
+
+</script>
+{/literal}
+{/block}
+
+{block name=body}
+<form id="form_switch">
+    <table width="50%">
+        <thead>
+            <tr><th colspan="4">班课用户标识转换</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <select name="identity">
+                        {foreach from=$identity item=i key=k}
+                            <option value="{$k}">{$i}</option>
+                        {/foreach}
+                    </select>
+                </td>
+                <td>
+                    <select name="switch_type" id="switch_type">
+                        {if $switch_type}
+                            {foreach from=$switch_type item=type key=k}
+                                <option value="{$k}">{$type}</option>
+                            {/foreach}
+                        {else}
+                            <option value="">没有权限</option>
+                        {/if}
+                    </select>
+                </td>
+                <td><input type="text" id="stu_id" name="stu_id" placeholder="请输入学员ID"></td>
+                <td><button type="submit" id="identity_switch">转换</button> </td>
+            </tr>
+        </tbody>
+    </table>
+</form>
+
+<table width="50%">
+    <thead>
+        <tr><th colspan="5">操作日志</th></tr>
+        <tr>
+            <th width="5%">序号</th>
+            <th width="25%">时间</th>
+            <th width="25%">类型</th>
+            <th width="25%">学员</th>
+            <th width="20%">操作人</th>
+        </tr>
+    </thead>
+    <tbody>
+        {if $switch_log}
+            {foreach from=$switch_log item=log key=k}
+                <tr>
+                    <td>{$k+1}</td>
+                    <td>{$log.add_time}</td>
+                    <td>{$log.switch_type}</td>
+                    <td><a href="admin/user/user_detail_info.php?user_id={$log.stu_id}" target="_blank">{$log.stu_id}</a> </td>
+                    <td>{$log.user_name}</td>
+                </tr>
+            {/foreach}
+        {else}
+            <tr><td colspan="5" align="center">暂无转换日志</td></tr>
+        {/if}
+    </tbody>
+</table>
+
+{/block}}

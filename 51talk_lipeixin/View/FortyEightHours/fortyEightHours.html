@@ -1,0 +1,136 @@
+{block name=head}
+<link href="http://static.51talk.com/images/admin/skin.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/css/admin/right_css.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css">
+<script src="http://static.51talk.com/js/jquery.min.js" type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.ui/jquery-ui.min.js' type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.cookie.js' type="text/javascript" language="javascript"></script>
+<script src="http://static.51talk.com/js/WebCalendar.js" type="text/javascript" language="javascript"></script>
+{literal}
+<script type="text/javascript">
+    //加载页面
+    function pop_loading(){
+        var loading='<img src="http://static.51talk.com/images/admin/loadding2.gif" />';
+        $("body").append('<div id="pop_loading"><div style="text-align:center">'+loading+'</div></div>');
+        $("#pop_loading").dialog({
+            bgiframe: true,
+            autoOpen: true,
+            resizable: false,
+            modal: true,
+            height: 160,
+            width: 300,
+            open: function(){
+                $(this).parent().find('.ui-dialog-titlebar').hide();
+            },
+            close: function(){
+                $(this).remove();
+            }
+        });
+    }
+    //加载页面关闭
+    function pop_loading_close(){
+        $('#pop_loading').dialog('close');
+    }
+    $(function(){
+        var start_time = $('#start_time').val();
+        var end_time = $('#end_time').val();
+        var age_type = $('#age_type').val();
+        var controller = $('#controller').val();
+        pop_loading();
+        $('#detail').load(controller+'/detail?start_time='+start_time+'&end_time='+end_time+'&age_type='+age_type,function(){
+            pop_loading_close();
+        });
+    });
+    function search(){
+        var start_time = $('#start_time').val();
+        var end_time = $('#end_time').val();
+        if(!start_time){
+            $('#validate_msg').html('请填写开始时间！');
+            alert('请填写开始时间！');
+            return false;
+        }
+        if(!end_time){
+            $('#validate_msg').html('请填写结束时间！');
+            alert('请填写结束时间！');
+            return false;
+        }
+        start_time = new Date(start_time).getTime();
+        end_time = new Date(end_time).getTime();
+        if(start_time > end_time){
+            $('#validate_msg').html('结束时间不能小于开始时间！');
+            alert('结束时间不能小于开始时间！');
+            return false;
+        }
+        //特殊验证
+        var controller = $('#controller').val();
+        if(controller == 'FortyEightHoursOld') {
+            //老页面
+            if ((end_time - start_time) >= (31 * 24 * 3600 * 1000)) {
+                return confirm('查询时间段大于等于3天，速度可能会很慢，确定继续吗？');
+            }
+        }
+        if(controller == 'FortyEightHours') {
+            //新页面
+            var earliest_time = $('#earliest_time').val();
+            var latest_time = $('#latest_time').val();
+            earliest_time = new Date(earliest_time).getTime();
+            latest_time = new Date(latest_time).getTime();
+            if (earliest_time > start_time) {
+                alert('当前所选开始时间早于缓存表最早记录时间（' + $('#earliest_time').val() + '），如想获取需灌入该时间段数据！');
+                return false;
+            }
+            if (latest_time < end_time) {
+                alert('当前所选结束时间晚于缓存表最新记录时间（' + $('#latest_time').val() + '），请等待更新！');
+                return false;
+            }
+        }
+    }
+    function modify(){
+        if(!confirm('确定修改/删除/清空（慎用）吗？')){
+            return false;
+        }
+        $.ajax({
+            url:'FortyEightHours/modify',
+            success:function(msg){
+                alert(msg);
+            }
+        });
+    }
+</script>
+{/literal}
+{/block}
+
+{block name=body}
+<form>
+    <input type="hidden" id="controller" value="{$controller}">
+    <input type="hidden" id="earliest_time" value="{$earliest_time}">
+    <input type="hidden" id="latest_time" value="{$latest_time}">
+    <table width="100%">
+        <thead>
+            <tr><th class="table_title">查询条件</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    日期
+                    <input type="text" name="start_time" id="start_time" value="{$start_time}" onclick="SelectDate(this)" size="10" readonly>
+                    至
+                    <input type="text" name="end_time" id="end_time" value="{$end_time}" onclick="SelectDate(this)" size="10" readonly>
+                    类型
+                    <select name="age_type" id="age_type">
+                        <option value="">全部</option>
+                        <option value="adult" {if $age_type=='adult'}selected{/if}>成人</option>
+                        <option value="young" {if $age_type=='young'}selected{/if}>青少</option>
+                    </select>
+                    <button type="submit" onclick="return search()">搜索</button>
+                    <span id="validate_msg" style="color: red"></span>
+                    {if $modify}
+                        <button onclick="modify()">修改/删除/清空</button>
+                    {/if}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</form>
+<div id="detail"></div>
+{/block}

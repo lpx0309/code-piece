@@ -1,0 +1,227 @@
+{if $blank}
+    <link href="http://static.51talk.com/images/admin/skin.css" rel="stylesheet" type="text/css" />
+    <link href="http://static.51talk.com/css/admin/right_css.css" rel="stylesheet" type="text/css" />
+    <link href="http://static.51talk.com/js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css" />
+    <script src="http://static.51talk.com/js/jquery.min.js" type="text/javascript" language="javascript"></script>
+    <script src='http://static.51talk.com/js/jquery.ui/jquery-ui.min.js' type="text/javascript" language="javascript"></script>
+    <title>修改班课信息</title>
+    <input type="hidden" id="is_refund" value="{$is_refund}">
+{/if}
+
+{literal}
+<script type="text/javascript">
+    $(function(){
+        var is_refund = $("#is_refund").val();
+        if (is_refund=='y') {
+            $("button").attr("disabled","disabled");
+        }
+        muti_stu_class_op(2);
+        muti_stu_class_change($('#muti_stu_class').val());
+    });
+    //班课操作
+    function muti_stu_class_op(op){
+        if(op==1){
+            /*$('.muti_stu_class_modify_add_reason').show();
+            $('.muti_stu_class_modify_op_reason').hide();
+            $('.muti_stu_class_modify').show();
+            $('.muti_stu_class_del').hide();*/
+        }else{
+            $('.muti_stu_class_modify_add_reason').hide();
+            $('.muti_stu_class_modify_op_reason').show();
+            $('.muti_stu_class_modify').hide();
+            $('.muti_stu_class_del').show();
+        }
+    }
+    //选择班课类型
+    function muti_stu_class_change(class_id){
+        $('#muti_stu_class_total').html($('#class_total_'+class_id).val());
+        $('#muti_stu_class_remain').html($('#class_remain_'+class_id).val());
+    }
+    //修改班课
+    /*function muti_stu_class_modify(){
+        if(!$('#muti_stu_class').val()){
+            alert('请选择班课类型！');
+            return false;
+        }
+        if(!$('#muti_stu_class_modify_add_reason').val()){
+            alert('请选择添加原因！');
+            return false;
+        }
+        if(!$('#muti_stu_class_modify_remark').val()){
+            alert('请填写备注！');
+            return false;
+        }
+        var data = {
+            'stu_id':$('#user_id').val(),
+            'muti_stu_class':$('#muti_stu_class').val(),
+            'muti_stu_class_modify_add_reason':$('#muti_stu_class_modify_add_reason').val(),
+            'muti_stu_class_modify_remark':$('#muti_stu_class_modify_remark').val()
+        };
+        alert(data);
+        console.log(data);
+        $.ajax({
+            url:'',
+            type:'POST',
+            data:data,
+            success:function(msg){
+
+            }
+        });
+    }*/
+    //删除班课
+    function muti_stu_class_del(){
+        if(confirm('您确定要退款？')){
+            if(!$('#muti_stu_class').val()){
+                alert('请选择班课类型！');
+                return false;
+            }
+            if(!$('#muti_stu_class_modify_remark').val()){
+                alert('请填写备注！');
+                return false;
+            }
+            if(parseInt($('#muti_stu_class_remain').html())<=0){
+                alert('没有可删除数据！');
+                return false;
+            }
+            var stu_id = $('#user_id').val();
+            if(!stu_id){
+                var stu_id=$('#stu_id').val();
+            }
+            var data = {
+                'stu_id':stu_id,
+                'muti_stu_class':$('#muti_stu_class').val(),
+                'muti_stu_class_name':$('#muti_stu_class').find("option:selected").text(),
+                'muti_stu_class_modify_type':2,
+                'muti_stu_class_modify_remark':$('#muti_stu_class_modify_remark').val(),
+                'muti_stu_class_remain':$('#muti_stu_class_remain').html()
+            };
+            //console.log(data);
+            $.ajax({
+                 url:'ajax_muti_stu_class_del.php',
+                 type:'POST',
+                 data:data,
+                 success:function(msg){
+                     if(isNaN(msg)){
+                         alert(msg);
+                     }else{
+                         alert('修改成功！');
+                         window.location.reload();
+                     }
+                 }
+             });
+        }
+    }
+    //班课流水
+    function muti_stu_class_record(){
+        var stu_id = $('#user_id').val();
+        if(!stu_id){
+            var stu_id=$('#stu_id').val();
+        }
+        $("body").append('<div id="muti_stu_class_record">载入中...</div>');
+        $("#muti_stu_class_record").dialog({
+            modal: true,
+            autoOpen:true,
+            resizable:true,
+            width:1000,
+            height:500,
+            title:'班课流水记录',
+            open:function(){
+                $(this).load('muti_stu_class_record.php?stu_id='+stu_id);
+            },
+            close:function(){
+                $(this).remove();
+            }
+        });
+    }
+</script>
+{/literal}
+
+{if $blank}
+    <input type="hidden" id="stu_id" value="{$stu_id}">
+{/if}
+<table width="100%">
+    <thead>
+        <tr>
+            <th class="table_title" colspan="2">
+                {if $course_type==20}新{else}老{/if}一对多班课修改&nbsp;
+                <a href="javascript:;" onclick="muti_stu_class_record()" style="color: red">查看流水</a>
+                {if $course_type==20}
+                    <a href="muti_stu_class_modify.php?stu_id={$stu_id}&course_type=15&blank=1" target="_blank">老一对多班课修改</a>
+                {/if}
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th width="20%" height="23" align="right">操作：</th>
+            <td width="80%">
+                <!--<select onchange="muti_stu_class_op(this.value)">
+                    <option value="1">添加补课点数+1</option>
+                    <option value="2">退费</option>
+                </select>-->
+                退费
+            </td>
+        </tr>
+        <tr>
+            <th width="20%" height="23" align="right">班课类型：</th>
+            <td width="80%">
+                <select id="muti_stu_class" onchange="muti_stu_class_change(this.value)">
+                    {if $class_list}
+                        {foreach from=$class_list item=class}
+                            <option value="{$class.id}">{$class.name}</option>
+                        {/foreach}
+                    {else}
+                        <option value="">暂无数据</option>
+                    {/if}
+                </select>
+                {if $class_list}
+                    {foreach from=$class_list item=class}
+                        <input type="hidden" id="class_total_{$class.id}" value="{$class.total}">
+                        <input type="hidden" id="class_remain_{$class.id}" value="{$class.remain}">
+                    {/foreach}
+                {/if}
+            </td>
+        </tr>
+        <tr>
+            <th width="20%" height="23" align="right">总课量：</th>
+            <td width="80%" id="muti_stu_class_total"></td>
+        </tr>
+        <tr>
+            <th width="20%" height="23" align="right">当前剩余课量：</th>
+            <td width="80%" id="muti_stu_class_remain"></td>
+        </tr>
+        <!--<tr>
+            <th width="20%" height="23" align="right">当前补课点数：</th>
+            <td width="80%" id="muti_stu_class_point"></td>
+        </tr>
+        <tr class="muti_stu_class_modify_add_reason">
+            <th width="20%" height="23" align="right">添加原因：</th>
+            <td width="80%">
+                <select id="muti_stu_class_modify_add_reason">
+                    <option value="">请选择</option>
+                    {foreach from=$add_reason item=reason}
+                        <option value="{$reason}">{$reason}</option>
+                    {/foreach}
+                </select>
+            </td>
+        </tr>-->
+        <tr class="muti_stu_class_modify_op_reason">
+            <th width="20%" height="23" align="right">操作原因：</th>
+            <td width="80%">班课退款</td>
+        </tr>
+        <tr>
+            <th width="20%" height="23" align="right">填写备注：</th>
+            <td width="80%">
+                <textarea id="muti_stu_class_modify_remark" rows='5' cols='100'></textarea>
+            </td>
+        </tr>
+        <tr>
+            <th colspan="2">
+                {if $modify_right == 1}
+                    <button class="muti_stu_class_modify" onclick="muti_stu_class_modify()">修改</button>
+                    <button class="muti_stu_class_del" onclick="muti_stu_class_del()">删除</button>
+                {/if}
+            </th>
+        </tr>
+    </tbody>
+</table>

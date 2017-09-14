@@ -1,0 +1,28 @@
+<table width="100%">
+    <thead>
+    <tr>
+        <th>操作</th>
+        <th>修改前</th>
+        <th>修改后</th>
+        <th>操作原因</th>
+        <th>操作人</th>
+        <th>操作时间</th>
+    </tr>
+    </thead>
+    <tbody>
+    {if $point_change_log}
+        {foreach from=$point_change_log item=record key=record_id}
+            <tr>
+                <td align="center">{$record.do_type}</td>
+                <td align="center">{$record.oricontent}</td>
+                <td align="center">{$record.lastcontent}</td>
+                <td align="center">{$record.remark}</td>
+                <td align="center">{$record.operator}</td>
+                <td align="center">{$record.add_time}</td>
+            </tr>
+        {/foreach}
+    {else}
+        <tr><td colspan="7" align="center">暂无任何记录</td></tr>
+    {/if}
+    </tbody>
+</table>

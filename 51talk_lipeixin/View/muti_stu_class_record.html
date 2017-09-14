@@ -1,0 +1,30 @@
+<table width="100%">
+    <thead>
+        <tr>
+            <th>班课类型</th>
+            <th>操作项目</th>
+            <th>操作原因</th>
+            <th>修改前</th>
+            <th>修改后</th>
+            <th>操作人</th>
+            <th>操作时间</th>
+        </tr>
+    </thead>
+    <tbody>
+        {if $muti_stu_class_record}
+            {foreach from=$muti_stu_class_record item=record key=record_id}
+                <tr>
+                    <td align="center">{$record.class_name}</td>
+                    <td align="center">{if $record.type==2}退费{/if}</td>
+                    <td align="center">{$record.reason}</td>
+                    <td align="center">{$record.before_lession_num}</td>
+                    <td align="center">{$record.after_lession_num}</td>
+                    <td align="center">{$record.admin_name}</td>
+                    <td align="center">{$record.add_time}</td>
+                </tr>
+            {/foreach}
+        {else}
+            <tr><td colspan="7" align="center">暂无任何记录</td></tr>
+        {/if}
+    </tbody>
+</table>

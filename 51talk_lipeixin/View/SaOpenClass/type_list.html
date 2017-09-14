@@ -1,0 +1,199 @@
+{block name=head}
+<link href="http://static.51talk.com/images/admin/skin.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/css/admin/right_css.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css">
+<script src="http://static.51talk.com/js/jquery.min.js" type="text/javascript" language="javascript"></script>
+<script src="http://static.51talk.com/js/jquery.ui/jquery-ui.min.js" type="text/javascript" language="javascript"></script>
+{literal}
+<script type="text/javascript">
+    //加载页面
+    function pop_loading(){
+        var loading='<img src="http://static.51talk.com/images/admin/loadding2.gif" />';
+        $("body").append('<div id="pop_loading"><div style="text-align:center">'+loading+'</div></div>');
+        $("#pop_loading").dialog({
+            bgiframe: true,
+            autoOpen: true,
+            resizable: false,
+            modal: true,
+            height: 160,
+            width: 300,
+            open: function(){
+                $(this).parent().find('.ui-dialog-titlebar').hide();
+            },
+            close: function(){
+                $(this).remove();
+            }
+        });
+    }
+    //加载页面关闭
+    function pop_loading_close(){
+        $('#pop_loading').dialog('close');
+    }
+
+    $(function(){
+
+    });
+
+    function type_modify(id) {
+        var title = '';
+        if(id > 0){
+            title = '修改';
+        }else{
+            title = '添加';
+        }
+        title += '课程类型';
+        var loading='<img src="http://static.51talk.com/images/admin/loadding2.gif" />';
+        $("body").append('<div id="pop_type_modify"><div style="text-align:center">'+loading+'</div></div>');
+        $("#pop_type_modify").dialog({
+            bgiframe: true,
+            autoOpen: true,
+            resizable: false,
+            modal: true,
+            height: 400,
+            width: 400,
+            title:title,
+            open: function(){
+                $(this).load('TypeModify?id='+id);
+            },
+            close: function(){
+                $(this).remove();
+            },
+            buttons: {
+                '取消': function () {
+                    $(this).dialog('close');
+                },
+                '确定': function () {
+                    type_save(id);
+                }
+            }
+        });
+    }
+    
+    function type_save(id) {
+        var type = $('#type').val();
+        var status = $('input[name="status"]:checked').val();
+        var department = $('#department').val();
+        var declare = $('#declare').val();
+        if(!type){
+            alert('请输入课程类型！');
+            return false;
+        }
+        if(!status){
+            alert('请选择状态！');
+            return false;
+        }
+        if(!department){
+            alert('请选择可见部门！');
+            return false;
+        }
+        var text_max = $('#text_max').val();
+        if(declare.length > text_max){
+            alert('说明长度不能超过'+text_max+'个字符！');
+            return false;
+        }
+        $.ajax({
+            url:'TypeSave',
+            type:'POST',
+            data:{
+                'id':id,
+                'type':type,
+                'status':status,
+                'department':department,
+                'declare':declare,
+                'time':new Date().getTime()
+            },
+            beforeSend:function(){
+                pop_loading();
+            },
+            success:function(msg){
+                pop_loading_close();
+                if(isNaN(msg)) {
+                    alert(msg);
+                }else{
+                    alert('保存成功!');
+                    window.location.reload();
+                }
+            }
+        });
+    }
+
+    function type_delete(id) {
+        if(!confirm('您确定要删除这条记录吗？')){
+            return false;
+        }
+        $.ajax({
+            url:'TypeDel',
+            type:'POST',
+            data:{'id':id,'time':new Date().getTime()},
+            beforeSend:function(){
+                pop_loading();
+            },
+            success:function(msg){
+                pop_loading_close();
+                if(isNaN(msg)) {
+                    alert(msg);
+                }else{
+                    window.location.reload();
+                }
+            }
+        });
+    }
+
+    function length_validate(id){
+        var text_length = $('#'+id).val().length;
+        var text_max = $('#text_max').val();
+        if(text_length > text_max){
+            text_length = '<font color="red">'+text_length+'</font>';
+        }
+        $('#length_validate').html(text_length);
+    }
+</script>
+<style type="text/css">
+
+</style>
+{/literal}
+{/block}
+
+{block name=body}
+<div>
+    <input type="hidden" id="text_max" value="{$text_max}">
+    <div style="text-align: right">
+        <a href="javascript:;" onclick="type_modify(0)">添加课程类型</a>
+    </div>
+    <table width="100%">
+        <thead>
+            <tr>
+                <th class="table_title">课程类型</th>
+                <th class="table_title">部门可见</th>
+                <th class="table_title">状态</th>
+                <th class="table_title">创建人</th>
+                <th class="table_title">创建时间</th>
+                <th class="table_title">最后修改人</th>
+                <th class="table_title">最后修改时间</th>
+                <th class="table_title">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+        {if $type_list}
+            {foreach from=$type_list item=type}
+                <tr>
+                    <td>{$type.type_name}</td>
+                    <td>{$type.department}</td>
+                    <td>{$type.status}</td>
+                    <td>{$type.admin_user}</td>
+                    <td>{$type.create_time}</td>
+                    <td>{$type.last_admin_user}</td>
+                    <td>{$type.last_update_time}</td>
+                    <td>
+                        <a href="javascript:;" onclick="type_modify({$type.id})">修改</a>
+                        <a href="javascript:;" onclick="type_delete({$type.id})">删除</a>
+                    </td>
+                </tr>
+            {/foreach}
+        {else}
+            <tr><td colspan="8" align="center">暂无数据</td> </tr>
+        {/if}
+        </tbody>
+    </table>
+</div>
+{/block}

@@ -1,0 +1,1066 @@
+<!--<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">-->
+<!--<html xmlns="http://www.w3.org/1999/xhtml">-->
+<!--<head>-->
+{block name=head}
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+{literal}
+<link href="../../images/admin/skin.css" rel="stylesheet" type="text/css" />
+<link href="../../css/admin/right_css.css" rel="stylesheet" type="text/css">
+<script src='../../js/jquery.js'></script>
+<script src='../../js/WebCalendar.js'></script>
+<script src='../../js/jquery.ui/jquery-ui.min.js'></script>
+<link href="../../js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css">
+<script src="../../js/new_user/uploadify/jquery.uploadify-3.1.min.js" type="text/javascript" language="javascript"></script>
+{/literal}
+{/block}
+<!--</head>-->
+
+<!--<body>-->
+{block name='body'}
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+
+    <tr>
+        <th class="table_title"><a href="javascript:addClassInfo()" style="float:right">添加课程</a></th>
+    </tr>
+    <tr>
+        <td width="17%" height="23">
+            <form action="/SaOpenClass/getClassList" method="get" id="form_sub" style="float:left">
+                开课日期：
+                <input type="text" name="startDate" size="10" value="{$startDate}" onclick="SelectDate(this)" readonly="readonly">-
+                <input type="text" name="endDate"  size="10" value="{$endDate}" onclick="SelectDate(this)" readonly="readonly">
+                开课时段：
+                <select name="startTime" style="width:180px;">
+                    {foreach from=$timeArray key=k item=v}
+                    <option value="{$k}"{if $k eq $startTime} selected="true" {/if} >{$v}:00</option>
+                    {/foreach}
+                </select>
+                -
+                <select name="endTime" style="width:180px;">
+                    {foreach from=$timeArray key=k item=v}
+                    <option value="{$k}"{if $k eq $endTime} selected="true" {/if}>{$v}:00 </option>
+                    {/foreach}
+                </select>
+
+                老师：{if $lookOtherClass == true}
+                <input type="text" name="tacherName" value="{$adminUserName}">
+                {else}
+                <span>{$adminUserName}</span>
+                {/if}
+                <input type="submit" name="submit" value="查询">
+            </form>
+        </td>
+    </tr>
+    <tr>
+        <td width="17%" height="23">
+            <table width="100%" cellpadding="500px" cellspacing="500px">
+                <thead>
+                <tr>
+                    <th>课程ID</th>
+                    <th>开课日期</th>
+                    <th>时间</th>
+                    <th>课程名称</th>
+                    <th>老师</th>
+                    <th>最后修改人</th>
+                    <th>最后修改时间</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {foreach from=$classList key=key item=v}
+                <tr>
+                    <td align="center">{$v.id}</td>
+                    <td align="center">{$v.openData}</td>
+                    <td align="center">{$v.openTime}</td>
+                    <td align="center">{$v.className}</td>
+                    <td align="center">{$v.teacherName}</td>
+                    <td align="center">{$v.lastUpAdminUserName}</td>
+                    <td align="center">{$v.lastUpTime|date_format:'%Y-%m-%d %H:%M:%S'}</td>
+                    <td align="center">
+                        {if $v.canUp == 1}
+                        <a href="javascript:updateClassInfoShow({$v.id})">修改</a>&nbsp;&nbsp;
+                        <a href="javascript:deleteClassInfoShow({$v.id})">删除</a>&nbsp;
+                        {else}
+                        <a href="javascript:alert('开课时间必须大于当前时间才能修改!');">修改</a>&nbsp;&nbsp;
+                        <a href="javascript:alert('开课时间必须大于当前时间才能删除!');">删除</a>&nbsp;
+                        {/if}
+                        <a href="javascript:classPoint({$v.id})">预约</a>&nbsp;&nbsp;
+                        <a href="javascript:getSubscribeInfo({$v.id})">学员</a>
+                    </td>
+                </tr>
+                {/foreach}
+                <tr><td colspan="8" align="center">{$Page}</td></tr>
+
+                </tbody>
+            </table>
+        </td>
+    </tr>
+
+</table>
+
+<div id ="addClass" style="display:none">
+    <table width="100%" cellpadding="100px" cellspacing="100px">
+        <form action="addClassInfo" method="post" id="addClassInfo" style="float:left">
+            <table>
+                <tr>
+                    <td>*课程类型：</td>
+                    <td>
+                        <select name="classType" id="addClassType" style="width:180px;" onchange="dispalyExt(this.value)">
+                            <option value="" >请选择</option>
+                            {foreach from=$classTypeSelect key=k item=v}
+                            <option value="{$k}" >{$v}</option>
+                            {/foreach}
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>*课程名称：</td>
+                    <td><input type ="text" id="addClassName" name="className"><br></td>
+                </tr>
+                <tr id="extClassLeavel" style="display: none">
+                    <td>*对应级别：</td>
+                    <td><select id="ClassLeavel" name="ClassLeavel" onchange="getUnitByLeavel(this.value)" style="width: 150px">
+                        <option value="" >请选择</option>
+                        {foreach from=$classLeavelList key=k item=v}
+                        <option value="{$v['id']}" >{$v['name']}</option>
+                        {/foreach}
+                    </select>
+                    </td>
+                </tr>
+                <tr id="extClassUnit" style="display: none">
+                    <td>*单元：</td>
+                    <td><select id="ClassUnit" name="ClassUnit" style="width: 150px">
+                    </select>
+                    </td>
+                </tr>
+                <tr id="extStuMaxLimit" style="display: none">
+                    <td>*学员上限：</td>
+                    <td><input id="StuMaxLimit" name="StuMaxLimit" style="width: 150px"></td>
+                </tr>
+                <tr>
+                    <td>*开课日期：</td>
+                    <td>
+                        <input type="text" name="start_date" id="addClassDate" size="10" value="{$nowDate}" onclick="SelectDate(this)" readonly="readonly">
+                    </td>
+                </tr>
+
+                <tr id="addClassTime_row">
+                    <td>*开课时间：</td>
+                    <td>
+                        <select name="timeArray" id="addClassTime">
+                            {foreach from=$timeArray key=k item=v}
+                            {if $k eq 14}
+                            <option value="{$k}" selected="true" >{$v}</option>
+                            {else}
+                            <option value="{$k}" >{$v}</option>
+                            {/if}
+                            {/foreach}
+                        </select>:
+                        <select name="timeMinute">
+                            <option value="00">00</option>
+                            <option value="30">30</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr id="addClassTime_row_oc">
+                    <td>*开课时间：</td>
+                    <td>
+                        <select name="timeArray_oc" id="addClassTime_oc">
+                            <option value="11:00-11:25" >11:00-11:25</option>
+                            <option value="15:00-15:25" >15:00-15:25</option>
+                            <option value="16:00-16:25" >16:00-16:25</option>
+                            <option value="18:30-18:55" >18:30-18:55</option>
+                            <option value="19:30-19:55" >19:30-19:55</option>
+                            <option value="20:00-20:25" >20:00-20:25</option>
+                            <option value="20:30-20:55" >20:30-20:55</option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr id="addOpenTime_row">
+                    <td>*开课时长：</td>
+                    <td><input type="text" name="classTime" id="addOpenTime" value="30"/>&nbsp;&nbsp;分钟（默认30,取值5-300）<br></td>
+                </tr>
+                <tr id="addCourseware_row">
+                    <td>*课件：</td>
+                    <td>
+                        <select name="Courseware" id="addCourseware" style="width:180px;">
+                            {foreach from=$classCoursewareSelect key=k item=v}
+                            <option value="{$k}" >{$v}</option>
+                            {/foreach}
+                        </select>
+
+                    </td>
+                </tr>
+                <tr id="addCourseware_row_oc">
+                    <td>*课件：</td>
+                    <td>
+                        <select name="Courseware_oc" id="addCourseware_oc" style="width:180px;">
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>*老师：</td>
+                    <td><span>{$addTeacherName}</span>
+                        <input type="hidden" name="teacherName" id="addTeacherName" value="{$addTeacherName}"/><br>
+                    </td>
+                </tr>
+                <tr>
+                    <td>是否开启老师视频：</td>
+                    <td><input type="radio" name="isVideo" value="1" checked="checked"> 是 <input type="radio" name="isVideo" value="0" > 否<br></td>
+                </tr>
+            </table>
+        </form>
+    </table>
+</div>
+
+<div id ="updateClass" style="display:none">
+    <table width="100%" cellpadding="100px" cellspacing="100px">
+        <form action="updateClassInfo" method="post" id="updateClassInfo" style="float:left">
+            <table>
+                <tr>
+                    <td>*课程类型：</td>
+                    <td>
+                        <select name="classType" id="upClassType" style="width:180px;" onchange="dispalyExtUp(this.value)">
+                            {foreach from=$classTypeSelect key=k item=v}
+                            <option id="upClassType{$k}" value="{$k}" >{$v}</option>
+                            {/foreach}
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>*课程名称：</td>
+                    <td><input type ="text" id="upClassName" name="classNmae"><br></td>
+                </tr>
+                <tr id="upextClassLeavel" style="display: none">
+                    <td>*对应级别：</td>
+                    <td><select id="upClassLeavel" name="ClassLeavel" onchange="getUpUnitByLeavel(this.value)" style="width: 150px">
+                        {foreach from=$classLeavelList key=k item=v}
+                        <option id="upClassLeavel{$v['id']}" value="{$v['id']}" >{$v['name']}</option>
+                        {/foreach}
+                    </select>
+                    </td>
+                </tr>
+                <tr id="upextClassUnit" style="display: none">
+                    <td>*单元：</td>
+                    <td><select id="upClassUnit" name="ClassUnit" style="width: 150px">
+
+                    </select>
+                    </td>
+                </tr>
+                <tr id="upextStuMaxLimit" style="display: none">
+                    <td>*学员上限：</td>
+                    <td><input id="upStuMaxLimit" name="StuMaxLimit" style="width: 150px"></td>
+                </tr>
+                <tr>
+                    <td>*开课日期：</td>
+                    <td>
+                        <input type="text" name="classData" id="upClassDate" size="10" value="{$start_date}" onclick="SelectDate(this)" readonly="readonly">
+                    </td>
+                </tr>
+
+                <tr id="upClassTime_row">
+                    <td>*开课时间：</td>
+                    <td>
+                        <select name="classTime" id="upClassTime">
+                            {foreach from=$timeArray key=k item=v}
+                            <option id="upClassTime{$k}" value="{$k}" >{$v}</option>
+                            {/foreach}
+                        </select>:
+                        <select name="classMinute">
+                            <option id="upClassMinute0" value="0">00</option>
+                            <option id="upClassMinute30" value="30">30</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr id="upClassTime_row_oc">
+                    <td>*开课时间：</td>
+                    <td>
+                        <select name="timeArray_oc" id="upClassTime_oc">
+                            <option value="11:00-11:25" >11:00-11:25</option>
+                            <option value="15:00-15:25" >15:00-15:25</option>
+                            <option value="16:00-16:25" >16:00-16:25</option>
+                            <option value="18:30-18:55" >18:30-18:55</option>
+                            <option value="19:30-19:55" >19:30-19:55</option>
+                            <option value="20:00-20:25" >20:00-20:25</option>
+                            <option value="20:30-20:55" >20:30-20:55</option>
+                        </select>
+                    </td>
+                </tr>
+
+
+                <tr id="upOpenTime_row">
+                    <td>*开课时长：</td>
+                    <td><input type="text" name="openTime" id="upOpenTime" />&nbsp;&nbsp;分钟（默认30,取值5-300）<br></td>
+                </tr>
+                <tr id="upCourseware_row">
+                    <td>*课件：</td>
+                    <td>
+                        <select name="courseware" id="upCourseware" style="width:180px;">
+                            {foreach from=$classCoursewareSelect key=k item=v}
+                            <option id="upCourseware{$k}" value="{$k}" >{$v}</option>
+                            {/foreach}
+                        </select>
+
+                    </td>
+                </tr>
+                <tr id="upCourseware_row_oc">
+                    <td>*课件：</td>
+                    <td>
+                        <select name="Courseware_oc" id="upCourseware_oc" style="width:180px;">
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>*老师：</td>
+                    <td>
+                        {if $lookOtherClass == true}
+                        <input type="text" name="teacherName"  id="upTeacherName" value="{$adminUserName}">
+                        {else}
+                        <span>{$adminUserName}</span>
+                        <input type="hidden" name="teacherName" id="upTeacherName" value="{$adminUserName}">
+                        {/if}
+                    </td>
+
+                </tr>
+                <tr>
+                    <td>是否开启老师视频：</td>
+                    <td><input type="radio" id ="isVideo1" name="isVideo" value="1"> 是 <input type="radio"  id ="isVideo0"  name="isVideo" value="0"> 否<br></td>
+                </tr>
+                <input type="hidden" name="id" id="upClassId">
+            </table>
+        </form>
+    </table>
+</div>
+
+
+<div id ="classPoint" style="display:none">
+    <table width="100%" cellpadding="100px" cellspacing="100px">
+        <form action="stuSubscribeClass" method="post" id="classPointForm" style="float:left">
+            <table>
+                <tr>
+                    <td>*学员ID:</td>
+                    <td>
+                        <input type="text" name="stuId" id="SubscribeStuId" value=""/>
+                    </td>
+                </tr>
+                <input type="hidden" name="classId" id="pointClassId" value=""/>
+            </table>
+        </form>
+    </table>
+</div>
+
+<div id ="stuSubscribeClassInfo" style="display:none">
+    <table width="800" cellpadding="100px" cellspacing="100px">
+        <form action="upStuSubscribeStatus" method="post" id="upStuSubscribeStatusForm" style="float:left">
+            <table id = 'stuSubscribeInfo'>
+                <tr>
+                    <th width="px"><input type="checkbox" name="checked" onclick="checkall(this)" checked></input></th>
+                    <th width="100px">上课日期</th>
+                    <th width="100px">上课时间</th>
+                    <th width="100px">课程ID</th>
+                    <th width="100px">学员ID</th>
+                    <th width="100px">学员名称</th>
+                    <th width="100px">状态</th>
+                    <th width="100px">操作</th>
+                </tr>
+                <tbody id="stuSubscribeInfoDiv">
+                </tbody>
+            </table>
+            <input type="button" value="正常结束" onclick="updateStuClassStatus(3)">
+            <input type="button" value="学员缺席" onclick="updateStuClassStatus(4)">
+            <input type="hidden" id="StuClassStatusClassId">
+        </form>
+    </table>
+</div>
+
+{literal}
+<script>
+    var oc_class_type = '27';
+    function addClassInfo()
+    {
+        //定义添加框
+        $('#addClass').dialog({
+            width:600,
+            height:400,
+            autoOpen: false,
+            title:'添加课程',
+            modal: true,
+            buttons:{
+                '取消':function(){
+                    $(this).dialog('close');
+                    $(this).dialog('destroy');
+                },
+                '提交':function() {
+                    //判断课程类型
+                    var classType = $('#addClassType').val();
+                    if(classType == '' || classType == null || classType == undefined){
+                        alert('课程类型不能为空！请检查');
+                        return false;
+                    }
+                    //判断是否是UR课 拓展字段需要判断  Tank<tangpan@51talk.com> 2017.03.15
+                    if(classType == 28)
+                    {
+                        var classLeavel = $('#ClassLeavel').val();
+                        var classUnit = $('#ClassUnit').val();
+                        var stuMaxLimit = $('#StuMaxLimit').val();
+                        if(classLeavel == '' || classLeavel == null || classLeavel == undefined)
+                        {
+                            alert('对应级别不能为空！请检查');
+                            return false;
+                        }
+                        if(classUnit == '' || classUnit == null || classUnit == undefined)
+                        {
+                            alert('单元不能为空！请检查');
+                            return false;
+                        }
+                        if(stuMaxLimit == '' || stuMaxLimit == null || stuMaxLimit == undefined)
+                        {
+                            alert('学员上限不能为空！请检查');
+                            return false;
+                        }
+                    }
+                    //oc课
+                    if(classType == oc_class_type){
+                        var classLeavel = $('#ClassLeavel').val();
+                        if(classLeavel == '' || classLeavel == null || classLeavel == undefined) {
+                            alert('对应级别不能为空！请检查');
+                            return false;
+                        }
+                    }
+
+                    //判断课程名称
+                    var addClassName = $('#addClassName').val();
+                    if(addClassName == '' || addClassName == null || addClassName == undefined){
+                        alert('课程名称不能为空！请检查');
+                        return false;
+                    }
+                    //判断开课日期
+                    var classDate = $('#addClassDate').val();
+                    if(classDate == '' || classDate == null || classDate == undefined){
+                        alert('开课日期不能为空！请检查');
+                        return false;
+                    }
+                    //判断开课时长
+                    if(classType != oc_class_type){
+                        var classTime = $('#addOpenTime').val();
+                        if(classTime > 300 || classTime < 5){
+                            alert('开课时长取值5-300！请检查');
+                            return false;
+                        }
+                    }
+                    //判断课件
+                    if(classType == oc_class_type){
+                        var Courseware = $('#addCourseware_oc').val();
+                    }else{
+                        var Courseware = $('#addCourseware').val();
+                    }
+                    if(Courseware == '' || Courseware == null || Courseware == undefined){
+                        alert('课件选择不能为空！请检查');
+                        return false;
+                    }
+                    //判断老师
+                    var TeacherName = $('#addTeacherName').val();
+                    if(TeacherName == '' || TeacherName == null || TeacherName == undefined){
+                        alert('老师名称不能为空！请检查');
+                        return false;
+                    }
+                    $.ajax({
+                        url:"/SaOpenClass/isAcTeacherByAdminUserName",
+                        type:"post",
+                        dataType:"json",
+                        data:{adminUserName:TeacherName},
+                        success:function (e){
+                            if(e == 'false'){
+                                alert('该账号还不是AC老师，请先去添加AC老师！');
+                                return false;
+                            }else{
+                                //提交表单
+                                $("#addClassInfo").submit();
+                            }
+                        }
+                    });
+
+                },
+
+            }
+        });
+        $('#addClass').dialog('open');
+    }
+    //修改弹出框显示
+    function updateClassInfoShow(id)
+    {
+        //ajax 根据ID获取一条信息
+        $.ajax({
+            url:"/SaOpenClass/getClassInfoById",
+            type:"post",
+            dataType:"json",
+            data:{classId:id},
+            success:function (e){
+                $('#upClassId').val(id);
+                $('#upClassType'+e.classType).attr('selected',true);
+                if( e.classType == 28)
+                {
+                    $('#upextClassLeavel').css('display','');
+                    $('#upextClassUnit').css('display','');
+                    $('#upextStuMaxLimit').css('display','');
+                    $.ajax({
+                        url:"/SaOpenClass/getClassUnitByLeavel",
+                        type:"post",
+                        dataType:"json",
+                        data:{leavelId:e.classLeavel},
+                        success:function (re)
+                        {
+                            //新增之前删除之前的option
+                            $("#upClassUnit").find("option").remove();
+                            var classunit = document.getElementById("upClassUnit");
+                            for(var i=0; i<re.length; i++)
+                            {
+                                var opt = document.createElement("option");
+                                opt.value = re[i]['id'];
+                                if(opt.value == e.classUnit)
+                                {
+                                    opt.selected = true;
+                                }
+                                opt.innerText = re[i]['name'];
+                                classunit.appendChild(opt);
+                            }
+                        }
+                    });
+                    $('#upClassLeavel'+e.classLeavel).attr('selected',true);
+                    $('#upStuMaxLimit').val(e.stuMaxLimit);
+                }else if (e.classType == oc_class_type){
+                    $("#upClassTime_oc option[value='"+e.classLast+"']").attr('selected',true);
+                    $('#upClassLeavel'+e.classLeavel).attr('selected',true);
+                    $('#upStuMaxLimit').val(e.stuMaxLimit);
+                    getOcCoursewareByLevel(e.classLeavel,$("#upCourseware_oc"));
+                }
+                dispalyExtUp(e.classType);
+                $('#upClassTime'+e.classTime).attr('selected',true);
+                $('#upClassMinute'+e.classMinute).attr('selected',true);
+                $('#upClassName').val(e.classNmae);
+                $('#upClassDate').val(e.classData);
+                $('#upOpenTime').val(e.openTime);
+                $('#upTeacherName').val(e.teacherName);
+                $("#upCourseware"+e.courseware).attr("selected",true);
+                $('#isVideo'+e.isVideo).attr('checked',true);
+            }
+        });
+        $('#updateClass').dialog({
+            width:600,
+            height:400,
+            autoOpen: false,
+            title:'修改课程',
+            modal: true,
+            buttons:{
+                '取消':function(){
+                    $(this).dialog('close');
+                    $(this).dialog('destroy');
+                },
+                '提交':function() {
+                    //判断课程类型
+                    var classType = $('#upClassType').val();
+                    if(classType == '' || classType == null || classType == undefined){
+                        alert('课程类型不能为空！请检查');
+                        return false;
+                    }
+                    //判断是否是UR课 拓展字段需要判断  Tank<tangpan@51talk.com> 2017.03.16
+                    if(classType == 28)
+                    {
+                        var classLeavel = $('#upClassLeavel').val();
+                        var classUnit = $('#upClassUnit').val();
+                        var stuMaxLimit = $('#upStuMaxLimit').val();
+                        if(classLeavel == '' || classLeavel == null || classLeavel == undefined)
+                        {
+                            alert('对应级别不能为空！请检查');
+                            return false;
+                        }
+                        if(classUnit == '' || classUnit == null || classUnit == undefined)
+                        {
+                            alert('单元不能为空！请检查');
+                            return false;
+                        }
+                        if(stuMaxLimit == '' || stuMaxLimit == null || stuMaxLimit == undefined)
+                        {
+                            alert('学员上限不能为空！请检查');
+                            return false;
+                        }
+                    }
+
+                    if(classType == oc_class_type){
+                        var classLeavel = $('#upClassLeavel').val();
+                        if(classLeavel == '' || classLeavel == null || classLeavel == undefined) {
+                            alert('对应级别不能为空！请检查');
+                            return false;
+                        }
+                    }
+                    //判断课程名称
+                    var ClassName = $('#upClassName').val();
+                    if(ClassName == '' || ClassName == null || ClassName == undefined){
+                        alert('课程名称不能为空！请检查');
+                        return false;
+                    }
+                    //判断开课日期
+                    var classDate = $('#upClassDate').val();
+                    if(classDate == '' || classDate == null || classDate == undefined){
+                        alert('开课日期不能为空！请检查');
+                        return false;
+                    }
+                    //判断开课时长
+                    if(classType != oc_class_type){
+                        var classTime = $('#upOpenTime').val();
+                        if(classTime > 300 || classTime < 5){
+                            alert('开课时长取值5-300！请检查');
+                            return false;
+                        }
+                    }
+
+                    //判断课件
+                    if(classType == oc_class_type){
+                        var Courseware = $('#upCourseware_oc').val();
+                    }else{
+                        var Courseware = $('#upCourseware').val();
+                    }
+                    if(Courseware == '' || Courseware == null || Courseware == undefined){
+                        alert('课件选择不能为空！请检查');
+                        return false;
+                    }
+                    //判断老师
+                    var TeacherName = $('#upTeacherName').val();
+                    if(TeacherName == '' || TeacherName == null || TeacherName == undefined){
+                        alert('老师名称不能为空！请检查');
+                        return false;
+                    }
+                    $.ajax({
+                        url:"/SaOpenClass/isAcTeacherByAdminUserName",
+                        type:"post",
+                        dataType:"json",
+                        data:{adminUserName:TeacherName},
+                        success:function (e){
+                            if(e == 'false'){
+                                alert('该账号还不是AC老师，请先去添加AC老师！');
+                                return false;
+                            }else{
+                                $("#updateClassInfo").submit();
+                            }
+                        }
+                    });
+
+                },
+            }
+        });
+        $('#updateClass').dialog('open');
+    }
+    //预约弹出框
+    function classPoint(classId)
+    {
+        $('#classPoint').dialog({
+            width:300,
+            height:200,
+            autoOpen: false,
+            title:'预约课程',
+            modal: true,
+            buttons:{
+                '取消':function(){
+                    $(this).dialog('close');
+                    $(this).dialog('destroy');
+                },
+                '提交':function() {
+                    var stuId = $('#SubscribeStuId').val();
+                    var isUser = '';
+                    //判断学生是否存在
+                    $.ajax({
+                        url:"/SaOpenClass/isStudent",
+                        type:"post",
+                        dataType:"json",
+                        data:{stuId:stuId},
+                        success:function (e){
+                            if(e == 'true'){
+                                // ajax 预约学生
+                                var stuId = $('#SubscribeStuId').val();
+                                var classId = $('#pointClassId').val();
+                                //判断学生是否存在
+                                $.ajax({
+                                    url:"/SaOpenClass/stuSubscribeClass",
+                                    type:"post",
+                                    dataType:"json",
+                                    data:{stuId:stuId,classId:classId},
+                                    success:function (e){
+                                        if(e.code == 10000){
+                                            alert('预约成功！');
+                                            $('#classPoint').dialog('close');
+                                        }else{
+                                            alert(e.message);
+                                        }
+                                    }
+                                });
+                            }else{
+                                alert('该学生不存在或已冻结，请检查！');
+                            }
+                        }
+                    });
+                }
+            }
+        });
+        $('#pointClassId').val(classId);
+        $('#classPoint').dialog('open');
+    }
+
+    //根据课程获取课程信息
+    function getSubscribeInfo(classId)
+    {
+        var str = '<tr>';
+        $.ajax({
+            url:"/SaOpenClass/getSubscribeListByClassId",
+            type:"post",
+            dataType:"json",
+            data:{classId:classId},
+            success:function (e){
+                $.each(e, function(k, v) {
+                    str += '<tr>';
+                    str += '<td class="td_bg"  height="23"><input type="checkbox" name="AdminId" value="'+v.id+'" book_id="'+v.book_id+'" checked></td>';
+                    str += '<td class="td_bg"  height="23"><span class="TableRow2">' + v.classDate + '</span></td>';
+                    str += '<td class="td_bg"  height="23"><span class="TableRow2">' + v.classTime + '</span></td>';
+                    str += '<td class="td_bg" height="23"><span class="TableRow2">' + v.classId + '</span></td>';
+                    str += '<td class="td_bg" height="23">' +
+                        '<a href="http://crm.51talk.com/admin/user/user_detail_info.php?user_id='+v.id+'&allow_edit=y">' +
+                        '<span class="TableRow2"><u><font color="#4682B4">' + v.id + '</font></u></span>' +
+                        '</a></td>';
+                    str += '<td class="td_bg"  height="23"><span class="TableRow2">' + v.nick_name + '</span></td>';
+                    str += '<td class="td_bg" height="23"><span class="TableRow2">' + v.status + '</span></td>';
+                    str += '<td class="td_bg" height="23"><span class="TableRow2">' +
+                        '<a href="javascript:cancelClassByStuId('+v.classId+','+v.id+')"><u><font color="#4682B4">取消</font></u></a>&nbsp;&nbsp;' +
+                        '<a href="http://crm.51talk.com/Admin/Sale/AcClassQualityReport?courseId='+v.classId+'"><u><font color="#4682B4">课程质量</font></u></a>' +
+                        '</span></td>';
+                    str += '</tr>';
+                })
+                $("#StuClassStatusClassId").val(classId);
+                $("#stuSubscribeInfoDiv").html(str);
+            }
+        });
+        $('#stuSubscribeClassInfo').dialog({
+            width:800,
+            height:400,
+            autoOpen: false,
+            title:'学生约课信息',
+            modal: true,
+            buttons:{
+                '取消':function(){
+                    $(this).dialog('close');
+                    $(this).dialog('destroy');
+                },
+
+            }
+        });
+        $('#stuSubscribeClassInfo').dialog('open');
+    }
+    //学生取消预约
+    function cancelClassByStuId( classId , stuId)
+    {
+
+        if(confirm("确认是否取消学生"+stuId+"的课程")){
+            //ajax 根据ID获取一条信息
+            $.ajax({
+                url:"/SaOpenClass/cancelClassByStuId",
+                type:"post",
+                dataType:"json",
+                data:{classId:classId,stuId:stuId},
+                success:function (e){
+                    $.each(e, function(k, v) {
+                        str += '<tr>';
+                        str += '<td class="td_bg"  height="23"><input type="checkbox" name="AdminId" value="'+v.id+'"checked></td>';
+                        str += '<td class="td_bg"  height="23"><span class="TableRow2">' + v.classDate + '</span></td>';
+                        str += '<td class="td_bg"  height="23"><span class="TableRow2">' + v.classTime + '</span></td>';
+                        str += '<td class="td_bg" height="23"><span class="TableRow2">' + v.classId + '</span></td>';
+                        str += '<td class="td_bg" height="23">' +
+                            '<a href="http://crm.51talk.com/admin/user/user_detail_info.php?user_id='+v.id+'&allow_edit=y">' +
+                            '<span class="TableRow2"><u><font color="#4682B4">' + v.id + '</font></u></span>' +
+                            '</a></td>';
+                        str += '<td class="td_bg"  height="23"><span class="TableRow2">' + v.nick_name + '</span></td>';
+                        str += '<td class="td_bg" height="23"><span class="TableRow2">' + v.status + '</span></td>';
+                        str += '<td class="td_bg" height="23"><span class="TableRow2">' +
+                            '<a href="javascript:cancelClassByStuId('+v.classId+','+v.id+')"><u><font color="#4682B4">取消</font></u></a>&nbsp;&nbsp;' +
+                            '<a href="http://aci.51talk.com/Admin/Sale/AcClassQualityReport?courseId='+v.classId+'"><u><font color="#4682B4">课程质量</font></u></a>' +
+                            '</span></td>';
+                        str += '</tr>';
+                    })
+                    $("#StuClassStatusClassId").val(classId);
+                    $("#stuSubscribeInfoDiv").html(str);
+                }
+            });
+        }
+    }
+    //全选
+    function checkall(o){
+        if(o.checked){
+            $("input[name='AdminId']").attr("checked",true);
+        }else{
+            $("input[name='AdminId']").attr("checked",false);
+        }
+    }
+    //修改学生上课状态
+    function updateStuClassStatus(status)
+    {
+        var classId = $('#StuClassStatusClassId').val();
+        var stu_info = [];
+        $('input[name="AdminId"]:checked').each(function(){
+            stu_info.push($(this).val()+":"+$(this).attr('book_id'));
+        });
+        var stu_str = stu_info.join(',');
+        if(stu_str == ''){
+            alert('请选择学生');
+            return false;
+        }
+        //ajax批量修改学生的课程状态
+        $.ajax({
+            url:"/SaOpenClass/updateStuClassStatusStatus",
+            type:"post",
+            dataType:"json",
+            data:{classId:classId,stuInfo:stu_str,status:status},
+            success:function (e){
+                alert(e.message);
+                window.location.reload();
+            }
+        });
+    }
+
+    function deleteClassInfoShow(classId) {
+        if(confirm('确定删除课程？')){
+            $.ajax({
+                url:"/SaOpenClass/deleteClassInf",
+                type:"post",
+                dataType:"json",
+                data:{classId:classId},
+                success:function (e){
+                    if(e.message == 'success'){
+                        alert('删除成功！');
+                        window.location.reload();
+                    }else{
+                        if(e.code == '20213'){
+                            alert('当前课程已有学员，请先取消学员再进行删除操作！');
+                        }else {
+                            alert(e.message);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    /*
+     *展现添加课程的拓展字段或者重新隐藏清空拓展字段
+     * Tank<tangpan@51talk.com>
+     * 2017.03.15
+     */
+    function dispalyExt(classtype)
+    {
+        if(classtype == 28)
+        {
+            $('#extClassLeavel').css('display','');
+            $('#extClassUnit').css('display','');
+            $('#extStuMaxLimit').css('display','');
+            $('#addClassName').val('');
+            $('#addClassName').attr('readonly',false);
+
+            $("#addClassTime_row").show();
+            $("#addOpenTime_row").show();
+            $("#addCourseware_row").show();
+            $("#addClassTime_row_oc").hide();
+            $("#addOpenTime_row_oc").hide();
+            $("#addCourseware_row_oc").hide();
+        } else if(classtype == oc_class_type){
+            $('#addClassName').val('新生入门课');
+            $('#addClassName').attr('readonly',true);
+            $('#extClassLeavel').css('display','');
+            $('#extClassUnit').css('display','none');
+            $('#extStuMaxLimit').css('display','none');
+
+            $("#addClassTime_row").hide();
+            $("#addOpenTime_row").hide();
+            $("#addCourseware_row").hide();
+            $("#addClassTime_row_oc").show();
+            $("#addOpenTime_row_oc").show();
+            $("#addCourseware_row_oc").show();
+
+        } else {
+            $('#extClassLeavel').css('display','none');
+            $('#extClassLeavel').val("");
+            $('#extClassUnit').css('display','none');
+            $('#extClassUnit').val("");
+            $('#extStuMaxLimit').css('display','none');
+            $('#extStuMaxLimit').val("");
+
+            $('#addClassName').val('');
+            $('#addClassName').attr('readonly',false);
+            $("#addClassTime_row").show();
+            $("#addOpenTime_row").show();
+            $("#addCourseware_row").show();
+            $("#addClassTime_row_oc").hide();
+            $("#addOpenTime_row_oc").hide();
+            $("#addCourseware_row_oc").hide();
+        }
+    }
+
+    /*
+     *更新时候展现添加课程的拓展字段或者重新隐藏清空拓展字段
+     * Tank<tangpan@51talk.com>
+     * 2017.03.15
+     */
+    function dispalyExtUp(classtype)
+    {
+        if(classtype == 28)
+        {
+            $('#upextClassLeavel').css('display','');
+            $('#upextClassUnit').css('display','');
+            $('#upextStuMaxLimit').css('display','');
+
+            $('#upClassName').val('');
+            $('#upClassName').attr('readonly',false);
+            $("#upClassTime_row").show();
+            $("#upOpenTime_row").show();
+            $("#upCourseware_row").show();
+            $("#upClassTime_row_oc").hide();
+            $("#upOpenTime_row_oc").hide();
+            $("#upCourseware_row_oc").hide();
+
+        } else if(classtype == oc_class_type){
+            $('#upClassName').val('新生入门课');
+            $('#upClassName').attr('readonly',true);
+            $('#upextClassLeavel').css('display','');
+            $('#upextClassUnit').css('display','none');
+            $('#upextStuMaxLimit').css('display','none');
+
+            $("#upClassTime_row").hide();
+            $("#upOpenTime_row").hide();
+            $("#upCourseware_row").hide();
+            $("#upClassTime_row_oc").show();
+            $("#upOpenTime_row_oc").show();
+            $("#upCourseware_row_oc").show();
+
+        } else {
+            $('#upextClassLeavel').css('display','none');
+            $('#upClassLeavel').val("");
+            $('#upextClassUnit').css('display','none');
+            $('#upClassUnit').val("");
+            $('#upextStuMaxLimit').css('display','none');
+            $('#upStuMaxLimit').val("");
+
+            $('#upClassName').val('');
+            $('#upClassName').attr('readonly',false);
+            $("#upClassTime_row").show();
+            $("#upOpenTime_row").show();
+            $("#upCourseware_row").show();
+            $("#upClassTime_row_oc").hide();
+            $("#upOpenTime_row_oc").hide();
+            $("#upCourseware_row_oc").hide();
+        }
+    }
+
+    /**
+     * 根据级别获取课件 oc课
+     */
+    function getOcCoursewareByLevel(level,obj) {
+        //名称前加上级别
+        var level_str = $("#ClassLeavel").find("option:selected").text().replace(/[^0-9A-Z]/ig,"");
+        $("#addClassName").val(level_str+$("#addClassName").val().replace(/[0-9A-Z]/ig,""));
+        $.ajax({
+            url:"/SaOpenClassCourseware/getCoursewareByLevel",
+            type:"post",
+            dataType:"json",
+            data:{leavelId:level},
+            success:function (e) {
+                if(e.code == '10000'){
+                    var option = "<option selected value='"+e.res.id+"'>"+e.res.pdf+"</option>";
+                    obj.html(option);
+                }else{
+                    obj.html('');
+                }
+            }
+        });
+    }
+
+    /*
+     * 根据对应级别联动查询对应的单元
+     * Tank <tangpan@51talk.com>
+     * 2017.03.17
+     * */
+    function getUnitByLeavel(classLeavel)
+    {
+        var class_type = $("#addClassType").val();
+        if(class_type == oc_class_type){//oc
+            getOcCoursewareByLevel(classLeavel, $("#addCourseware_oc"));
+            return;
+        }
+        $.ajax({
+            url:"/SaOpenClass/getClassUnitByLeavel",
+            type:"post",
+            dataType:"json",
+            data:{leavelId:classLeavel},
+            success:function (e)
+            {
+                //新增之前删除之前的option
+                $("#ClassUnit").find("option").remove();
+                var classunit = document.getElementById("ClassUnit");
+                for(var i=0; i<e.length; i++)
+                {
+                    var opt = document.createElement("option");
+                    opt.value = e[i]['id'];
+                    opt.innerText = e[i]['name'];
+                    classunit.appendChild(opt);
+                }
+            }
+        });
+    }
+
+    /*
+     * 根据对应级别联动查询对应的单元
+     * Tank <tangpan@51talk.com>
+     * 2017.03.17
+     * */
+    function getUpUnitByLeavel(classLeavel)
+    {
+        var class_type = $("#upClassType").val();
+        if(class_type == oc_class_type){//oc
+            //名称前加上级别
+            var level_str = $("#upClassLeavel").find("option:selected").text().replace(/[^0-9A-Z]/ig,"");
+            $("#upClassName").val(level_str+$("#upClassName").val().replace(/[0-9A-Z]/ig,""));
+            $.ajax({
+                url:"/SaOpenClassCourseware/getCoursewareByLevel",
+                type:"post",
+                dataType:"json",
+                data:{leavelId:classLeavel},
+                success:function (e) {
+                    if(e.code == '10000'){
+                        var option = "<option selected value='"+e.res.id+"'>"+e.res.pdf+"</option>";
+                        $("#upCourseware_oc").html(option);
+                    }else{
+                        $("#upCourseware_oc").html("");
+                    }
+                }
+            });
+            return;
+        }
+        $.ajax({
+            url:"/SaOpenClass/getClassUnitByLeavel",
+            type:"post",
+            dataType:"json",
+            data:{leavelId:classLeavel},
+            success:function (e)
+            {
+                //新增之前删除之前的option
+                $("#upClassUnit").find("option").remove();
+                var classunit = document.getElementById("upClassUnit");
+                for(var i=0; i<e.length; i++)
+                {
+                    var opt = document.createElement("option");
+                    opt.value = e[i]['id'];
+                    opt.innerHTML = e[i]['name'];
+                    classunit.appendChild(opt);
+                }
+            }
+        });
+    }
+</script>
+{/literal}
+{/block}
+<!--</body>-->
+<!--</html>-->

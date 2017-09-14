@@ -1,0 +1,129 @@
+{block name=head}
+<link href="http://static.51talk.com/images/admin/skin.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/css/admin/right_css.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css">
+<script src="http://static.51talk.com/js/jquery.min.js" type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.ui/jquery-ui.min.js' type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.cookie.js' type="text/javascript" language="javascript"></script>
+<script src="http://static.51talk.com/js/WebCalendar.js" type="text/javascript" language="javascript"></script>
+{literal}
+<script type="text/javascript">
+    //加载页面
+    function pop_loading(){
+        var loading='<img src="http://static.51talk.com/images/admin/loadding2.gif" />';
+        $("body").append('<div id="pop_loading"><div style="text-align:center">'+loading+'</div></div>');
+        $("#pop_loading").dialog({
+            bgiframe: true,
+            autoOpen: true,
+            resizable: false,
+            modal: true,
+            height: 160,
+            width: 300,
+            open: function(){
+                $(this).parent().find('.ui-dialog-titlebar').hide();
+            },
+            close: function(){
+                $(this).remove();
+            }
+        });
+    }
+    //加载页面关闭
+    function pop_loading_close(){
+        $('#pop_loading').dialog('close');
+    }
+
+    $(function(){
+        search();
+    });
+
+    function search(){
+        var start_time = $('#start_time').val();
+        var end_time = $('#end_time').val();
+        if(!start_time){
+            $('#validate_msg').html('请填写开始时间！');
+            alert('请填写开始时间！');
+            return false;
+        }
+        if(!end_time){
+            $('#validate_msg').html('请填写结束时间！');
+            alert('请填写结束时间！');
+            return false;
+        }
+        start_time = new Date(start_time).getTime();
+        end_time = new Date(end_time).getTime();
+        if(start_time > end_time){
+            $('#validate_msg').html('结束时间不能小于开始时间！');
+            alert('结束时间不能小于开始时间！');
+            return false;
+        }
+        $('#validate_msg').html('');
+        pop_loading();
+        $('#detail').load('detail',$('#form_wechat_count').serialize(),function(){
+            pop_loading_close();
+        });
+    }
+
+    function added_count_modify(admin_group){
+        if($('#start_time').val()!=$('#end_time').val()){
+            return false;
+        }
+        $('#count_'+admin_group).hide();
+        $('#count_text_'+admin_group).show();
+        $('#count_text_'+admin_group).focus();
+    }
+
+    function added_count_save(admin_group){
+        $.ajax({
+            url:'addedCount',
+            type:'POST',
+            data:{'admin_group':admin_group,'date':$('#start_time').val(),'count':$('#count_text_'+admin_group).val()},
+            beforeSend:function(){
+                pop_loading();
+            },
+            success:function(msg){
+                pop_loading_close();
+                if(isNaN(msg)){
+                    alert(msg);
+                }else{
+                    $('#count_'+admin_group).html($('#count_text_'+admin_group).val());
+                    $('#count_'+admin_group).show();
+                    $('#count_text_'+admin_group).hide();
+                }
+            }
+        });
+    }
+</script>
+<style type="text/css">
+    #detail{
+        overflow-y: scroll;
+        height: 500px;
+    }
+</style>
+{/literal}
+{/block}
+
+{block name=body}
+<div>
+    <form id="form_wechat_count">
+        <input type="hidden" name="admin_type" value="{$admin_type}">
+        <table width="100%">
+            <thead>
+                <tr><th class="table_title">查询条件</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        时间
+                        <input type="text" name="start_time" id="start_time" value="{$start_time}" onclick="SelectDate(this)" size="10" readonly>
+                        -
+                        <input type="text" name="end_time" id="end_time" value="{$end_time}" onclick="SelectDate(this)" size="10" readonly>
+                        <button onclick="search();return false">搜索</button>
+                        <span id="validate_msg" style="color: red"></span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+<div id="detail"></div>
+{/block}

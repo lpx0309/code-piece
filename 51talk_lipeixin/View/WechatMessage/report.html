@@ -1,0 +1,45 @@
+{block name=head}
+<link href="http://static.51talk.com/images/admin/skin.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/css/admin/right_css.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css">
+<script src="http://static.51talk.com/js/jquery.min.js" type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.ui/jquery-ui.min.js' type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.form.js' type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/WebCalendar.js'></script>
+{literal}
+<script>
+</script>
+{/literal}
+{/block}
+
+{block name=body}
+<form action="" method="get">
+    <input type="text" name="start_date" size="10" value="{$start_date}" onclick="SelectDate(this)" readonly="readonly">
+    <input type="text" name="end_date"  size="10" value="{$end_date}" onclick="SelectDate(this)" readonly="readonly">
+    <button type="submit">确定</button>
+</form>
+<table width="100%">
+    <thead>
+        <tr>
+            <th>日期</th>
+            <th>学习计划推送数</th>
+            <th>OC课推送数</th>
+            <th>请假信息</th>
+        </tr>
+    </thead>
+    <tbody>
+        {if $report_list}
+            {foreach from=$report_list item=report key=date}
+                <tr>
+                    <td>{$date}</td>
+                    <td>{if $report.1}{$report.1}{else}0{/if}</td>
+                    <td>{if $report.2}{$report.2}{else}0{/if}</td>
+                    <td>{if $report.3}{$report.3}{else}0{/if}</td>
+                </tr>
+            {/foreach}
+        {else}
+            <tr><td align="center" colspan="6">暂无数据</td></tr>
+        {/if}
+    </tbody>
+</table>
+{/block}}

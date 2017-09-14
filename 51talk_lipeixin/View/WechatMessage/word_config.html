@@ -1,0 +1,169 @@
+{block name=head}
+<link href="http://static.51talk.com/images/admin/skin.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/css/admin/right_css.css" rel="stylesheet" type="text/css" />
+<link href="http://static.51talk.com/js/jquery.ui/jquery-ui.css" rel="stylesheet" type="text/css">
+<script src="http://static.51talk.com/js/jquery.min.js" type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.ui/jquery-ui.min.js' type="text/javascript" language="javascript"></script>
+<script src='http://static.51talk.com/js/jquery.form.js' type="text/javascript" language="javascript"></script>
+{literal}
+<script>
+    $(function () {
+        $('#pop_word').dialog({
+            width:'420',
+            height:'470',
+            autoOpen: false,
+            modal: true,
+            buttons: {
+                '取消': function () {
+                    $(this).dialog('close');
+                },
+                '确定': function () {
+                    if(!$('#alias').val()){
+                        alert('请填写别名！');
+                        return false;
+                    }
+                    if(!$('#type').val()){
+                        alert('请选择类型！');
+                        return false;
+                    }
+                    /*if(!$('#u_word').val() && !$('#a_word').val()){
+                        alert('请填写文案！');
+                        return false;
+                    }*/
+                    $.ajax({
+                        url:'WordModify',
+                        type:'POST',
+                        data:$('#form_word').serialize(),
+                        success:function (res) {
+                            alert(res);
+                            window.location.reload();
+                        }
+                    });
+                }
+            }
+        });
+        $('.word_add').click(function () {
+            $('#form_word').resetForm();
+            $('#id').val('');
+            $('#alias').attr('readonly',false);
+            $('#pop_word').dialog('option','title','添加文案');
+            $('#pop_word').dialog('open');
+        });
+        $('.word_modify').click(function () {
+            var id = $(this).attr('id');
+            $('#form_word').resetForm();
+            $('#id').val(id);
+            $.ajax({
+                url:'getWordById',
+                type:'GET',
+                data:'id='+id,
+                dataType:'json',
+                success:function (word) {
+                    $('#alias').attr('readonly',true);
+                    $('#alias').val(word.alias);
+                    $('#type').val(word.type);
+                    $('#u_word').val(word.u_word);
+                    $('#a_word').val(word.a_word);
+                    $('#status').val(word.status);
+                    $('#pop_word').dialog('option','title','修改文案');
+                    $('#pop_word').dialog('open');
+                }
+            })
+        });
+        $('.word_delete').click(function () {
+            if(!confirm('确定删除？')){
+                return false;
+            }
+            var id = $(this).attr('del_id');
+            $.ajax({
+                url:'delWord',
+                type:'POST',
+                data:'id='+id,
+                success:function (res) {
+                    alert(res);
+                    window.location.reload();
+                }
+            })
+        })
+    })
+</script>
+{/literal}
+{/block}
+
+{block name=body}
+<div id="pop_word">
+    <form id="form_word">
+        <input type="hidden" name="id" id="id">
+        <table width="100%">
+            <tr>
+                <th width="80">别名</th>
+                <td><input type="text" name="alias" id="alias"> </td>
+            </tr>
+            <tr>
+                <th>类型</th>
+                <td>
+                    <select name="type" id="type">
+                        <option value="">请选择</option>
+                        {foreach from=$type item=t key=k}
+                            <option value="{$k}">{$t}</option>
+                        {/foreach}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th>学员文案</th>
+                <td><textarea name="u_word" id="u_word" style="width: 300px; height: 120px"></textarea></td>
+            </tr>
+            <tr>
+                <th>管理员文案</th>
+                <td><textarea name="a_word" id="a_word" style="width: 300px; height: 120px"></textarea></td>
+            </tr>
+            <tr>
+                <th>状态</th>
+                <td>
+                    <select name="status" id="status">
+                        <option value="1">开启</option>
+                        <option value="2">关闭</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+<a href="javascript:;" class="word_add" style="float: right">添加</a>
+<table width="100%">
+    <thead>
+        <tr>
+            <th width="5%">id</th>
+            <th width="15%">别名</th>
+            <th width="10%">类型</th>
+            <th width="30%">学员文案</th>
+            <th width="30%">管理员文案</th>
+            <th width="10%">状态</th>
+            <th width="10%">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {if $word_list}
+            {foreach from=$word_list item=word}
+                <tr>
+                    <td>{$word.id}</td>
+                    <td>{$word.alias}</td>
+                    <td>{$type[$word.type]}</td>
+                    <td>{$word.u_word}</td>
+                    <td>{$word.a_word}</td>
+                    <td>{if $word.status == 1}开启{else}关闭{/if}</td>
+                    <td align="center">
+                        <a href="javascript:;" class="word_modify" id="{$word.id}">修改</a>
+                        <!--<a href="javascript:;" class="word_delete" del_id="{$word.id}">删除</a>-->
+                    </td>
+                </tr>
+            {/foreach}
+        {else}
+            <tr><td align="center" colspan="6">暂无配置</td></tr>
+        {/if}
+    </tbody>
+</table>
+
+{/block}}
